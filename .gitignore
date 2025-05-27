@@ -1,0 +1,6 @@
+node_modules
+postgres-data
+dragonfly-data
+logs
+bun.lock
+.env

@@ -1,0 +1,22 @@
+{
+	"name": "timezone-db",
+	"version": "1.0.0",
+	"description": "",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"start": "bun run src/index.ts",
+		"dev": "bun run --hot src/index.ts --dev",
+		"lint": "bunx biome check",
+		"lint:fix": "bunx biome check --fix",
+		"cleanup": "rm -rf logs node_modules bun.lock"
+	},
+	"license": "BSD-3-Clause",
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/bun": "^1.2.14"
+	},
+	"dependencies": {
+		"@atums/echo": "^1.0.3"
+	}
+}
