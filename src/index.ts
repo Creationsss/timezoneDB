@@ -1,6 +1,7 @@
 import { DiscordAuth } from "@/discord";
 import { echo } from "@atums/echo";
 import { environment, verifyRequiredVariables } from "@config";
+import { withCors } from "@lib/cors";
 import { serve, sql } from "bun";
 
 verifyRequiredVariables();
@@ -39,42 +40,27 @@ echo.info(`Listening on http://${environment.host}:${environment.port}`);
 
 const auth = new DiscordAuth();
 
-function withCors(res: Response): Response {
-	const headers = new Headers(res.headers);
-	headers.set("Access-Control-Allow-Origin", "*");
-	headers.set(
-		"Access-Control-Allow-Methods",
-		"GET, POST, PUT, DELETE, OPTIONS",
-	);
-	headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-	headers.set("Access-Control-Allow-Credentials", "true");
-	headers.set("Access-Control-Max-Age", "86400");
-	return new Response(res.body, {
-		status: res.status,
-		statusText: res.statusText,
-		headers,
-	});
-}
-
 serve({
 	port: environment.port,
 	fetch: async (req) => {
 		if (req.method === "OPTIONS") {
+			const origin = req.headers.get("origin") ?? "";
 			return new Response(null, {
 				status: 204,
 				headers: {
-					"Access-Control-Allow-Origin": "*",
+					"Access-Control-Allow-Origin": origin,
 					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 					"Access-Control-Allow-Headers": "Content-Type, Authorization",
-					"Access-Control-Max-Age": "86400", // 24 hours
 					"Access-Control-Allow-Credentials": "true",
+					"Access-Control-Max-Age": "86400",
+					Vary: "Origin",
 				},
 			});
 		}
 
 		const url = new URL(req.url);
 
-		if (url.pathname === "/auth/discord") return auth.startOAuthRedirect();
+		if (url.pathname === "/auth/discord") return auth.startOAuthRedirect(req);
 		if (url.pathname === "/auth/discord/callback")
 			return auth.handleCallback(req);
 
@@ -83,6 +69,7 @@ serve({
 			if (!user)
 				return withCors(
 					Response.json({ error: "Unauthorized" }, { status: 401 }),
+					req,
 				);
 
 			const tz = url.searchParams.get("timezone");
@@ -92,6 +79,7 @@ serve({
 						{ error: "Timezone parameter is required" },
 						{ status: 400 },
 					),
+					req,
 				);
 
 			try {
@@ -99,6 +87,7 @@ serve({
 			} catch {
 				return withCors(
 					Response.json({ error: "Invalid timezone" }, { status: 400 }),
+					req,
 				);
 			}
 
@@ -109,7 +98,7 @@ serve({
 				SET username = EXCLUDED.username, timezone = EXCLUDED.timezone
 			`;
 
-			return withCors(Response.json({ success: true }));
+			return withCors(Response.json({ success: true }), req);
 		}
 
 		if (url.pathname === "/get") {
@@ -117,6 +106,7 @@ serve({
 			if (!id)
 				return withCors(
 					Response.json({ error: "Missing user ID" }, { status: 400 }),
+					req,
 				);
 
 			const rows = await sql`
@@ -126,6 +116,7 @@ serve({
 			if (rows.length === 0) {
 				return withCors(
 					Response.json({ error: "User not found" }, { status: 404 }),
+					req,
 				);
 			}
 
@@ -134,6 +125,7 @@ serve({
 					user: { id, username: rows[0].username },
 					timezone: rows[0].timezone,
 				}),
+				req,
 			);
 		}
 
@@ -142,10 +134,14 @@ serve({
 			if (!user)
 				return withCors(
 					Response.json({ error: "Unauthorized" }, { status: 401 }),
+					req,
 				);
-			return withCors(Response.json(user));
+			return withCors(Response.json(user), req);
 		}
 
-		return withCors(Response.json({ error: "Not Found" }, { status: 404 }));
+		return withCors(
+			Response.json({ error: "Not Found" }, { status: 404 }),
+			req,
+		);
 	},
 });

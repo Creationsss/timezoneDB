@@ -1,4 +1,5 @@
 import { discordConfig } from "@config";
+import { withCors } from "@lib/cors";
 import { randomUUIDv7, redis } from "bun";
 
 export class DiscordAuth {
@@ -6,23 +7,27 @@ export class DiscordAuth {
 	#clientSecret = discordConfig.clientSecret;
 	#redirectUri = discordConfig.redirectUri;
 
-	startOAuthRedirect(): Response {
+	startOAuthRedirect(req: Request): Response {
 		const query = new URLSearchParams({
 			client_id: this.#clientId,
 			redirect_uri: this.#redirectUri,
 			response_type: "code",
 			scope: "identify",
 		});
-		return Response.redirect(
-			`https://discord.com/oauth2/authorize?${query}`,
-			302,
+		return withCors(
+			Response.redirect(`https://discord.com/oauth2/authorize?${query}`, 302),
+			req,
 		);
 	}
 
 	async handleCallback(req: Request): Promise<Response> {
 		const url = new URL(req.url);
 		const code = url.searchParams.get("code");
-		if (!code) return Response.json({ error: "Missing code" }, { status: 400 });
+		if (!code)
+			return withCors(
+				Response.json({ error: "Missing code" }, { status: 400 }),
+				req,
+			);
 
 		const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
 			method: "POST",
@@ -38,7 +43,10 @@ export class DiscordAuth {
 
 		const tokenData: { access_token?: string } = await tokenRes.json();
 		if (!tokenData.access_token)
-			return Response.json({ error: "Unauthorized" }, { status: 401 });
+			return withCors(
+				Response.json({ error: "Unauthorized" }, { status: 401 }),
+				req,
+			);
 
 		const userRes = await fetch("https://discord.com/api/users/@me", {
 			headers: { Authorization: `Bearer ${tokenData.access_token}` },
@@ -48,14 +56,17 @@ export class DiscordAuth {
 		const sessionId = randomUUIDv7();
 		await redis.set(sessionId, JSON.stringify(user), "EX", 3600);
 
-		return Response.json(
-			{ message: "Authenticated" },
-			{
-				headers: {
-					"Set-Cookie": `session=${sessionId}; HttpOnly; Path=/; Max-Age=3600`,
-					"Content-Type": "application/json",
+		return withCors(
+			Response.json(
+				{ message: "Authenticated" },
+				{
+					headers: {
+						"Set-Cookie": `session=${sessionId}; HttpOnly; Path=/; Max-Age=3600; SameSite=None; Secure`,
+						"Content-Type": "application/json",
+					},
 				},
-			},
+			),
+			req,
 		);
 	}
 
