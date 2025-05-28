@@ -129,6 +129,17 @@ serve({
 			);
 		}
 
+		if (url.pathname === "/delete") {
+			const user = await auth.getUser(req);
+			if (!user)
+				return withCors(
+					Response.json({ error: "Unauthorized" }, { status: 401 }),
+					req,
+				);
+			await sql`DELETE FROM timezones WHERE user_id = ${user.id}`;
+			return withCors(Response.json({ success: true }), req);
+		}
+
 		if (url.pathname === "/me") {
 			const user = await auth.getUser(req);
 			if (!user)
