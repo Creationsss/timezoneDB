@@ -4,6 +4,8 @@ import { environment, verifyRequiredVariables } from "@config";
 import { withCors } from "@lib/cors";
 import { serve, sql } from "bun";
 
+const ignoreRoutes = ["/favicon.ico"];
+
 verifyRequiredVariables();
 
 try {
@@ -42,7 +44,34 @@ const auth = new DiscordAuth();
 
 serve({
 	port: environment.port,
-	fetch: async (req) => {
+	fetch: async (req, server) => {
+		const url = new URL(req.url);
+
+		if (ignoreRoutes.includes(url.pathname)) {
+			return new Response(null, { status: 204 });
+		}
+
+		let ip = server.requestIP(req)?.address;
+		if (
+			!ip ||
+			ip.startsWith("172.") ||
+			ip === "127.0.0.1" ||
+			ip.startsWith("::ff")
+		) {
+			ip =
+				req.headers.get("CF-Connecting-IP")?.trim() ||
+				req.headers.get("X-Real-IP")?.trim() ||
+				req.headers.get("X-Forwarded-For")?.split(",")[0].trim() ||
+				"unknown";
+		}
+
+		echo.custom(req.method, `${url.pathname}${url.search}`, {
+			IP: ip,
+			"User-Agent": req.headers.get("User-Agent") || "unknown",
+			Referer: req.headers.get("Referer") || "unknown",
+			Origin: req.headers.get("Origin") || "unknown",
+		});
+
 		if (req.method === "OPTIONS") {
 			const origin = req.headers.get("origin") ?? "";
 			return new Response(null, {
@@ -57,8 +86,6 @@ serve({
 				},
 			});
 		}
-
-		const url = new URL(req.url);
 
 		if (url.pathname === "/auth/discord") return auth.startOAuthRedirect(req);
 		if (url.pathname === "/auth/discord/callback")
