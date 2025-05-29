@@ -156,6 +156,20 @@ serve({
 			);
 		}
 
+		if (url.pathname === "/list") {
+			const rows = await sql`SELECT user_id, username, timezone FROM timezones`;
+
+			const result: Record<string, { username: string; timezone: string }> = {};
+			for (const row of rows) {
+				result[row.user_id] = {
+					username: row.username,
+					timezone: row.timezone,
+				};
+			}
+
+			return withCors(Response.json(result), req);
+		}
+
 		if (url.pathname === "/delete") {
 			const user = await auth.getUser(req);
 			if (!user)
