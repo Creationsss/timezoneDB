@@ -2,7 +2,7 @@ function withCors(response: Response, req: Request): Response {
 	const origin = req.headers.get("origin");
 
 	const headers = new Headers(response.headers);
-	if (origin && isAllowedOrigin(origin)) {
+	if (origin) {
 		headers.set("Access-Control-Allow-Origin", origin);
 		headers.set("Access-Control-Allow-Credentials", "true");
 		headers.set("Vary", "Origin");
@@ -13,10 +13,6 @@ function withCors(response: Response, req: Request): Response {
 		statusText: response.statusText,
 		headers,
 	});
-}
-
-function isAllowedOrigin(origin: string): boolean {
-	return origin.endsWith(".discord.com") || origin === "https://discord.com";
 }
 
 export { withCors };
