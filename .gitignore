@@ -1,0 +1,5 @@
+/target
+.sqlx
+dragonfly-data
+postgres-data
+.env

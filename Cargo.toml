@@ -1,0 +1,20 @@
+[package]
+name = "timezone-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.8.4"
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "macros"] }
+redis = { version = "0.31", features = ["tokio-comp", "aio"] }
+uuid = { version = "1", features = ["v7"] }
+dotenvy = "0.15"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.12", features = ["json", "gzip"] }
+tower-http = { version = "0.6.4", features = ["cors"] }
+headers = "0.4.0"
+chrono-tz = "0.10.3"

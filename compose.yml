@@ -1,0 +1,48 @@
+services:
+  timezone-db:
+    container_name: timezoneDB
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dragonfly:
+        condition: service_started
+    networks:
+      - timezoneDB-network
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - timezoneDB-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
+    restart: unless-stopped
+    ulimits:
+      memlock: -1
+    volumes:
+      - ./dragonfly-data:/data
+    networks:
+      - timezoneDB-network
+
+networks:
+  timezoneDB-network:
+    driver: bridge
