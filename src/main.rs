@@ -1,16 +1,17 @@
-use axum::{Router, serve};
+use axum::{serve, Router};
 use dotenvy::dotenv;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use tower_http::cors::CorsLayer;
 use tracing::{error, info};
 use tracing_subscriber;
 
 mod db;
+mod middleware;
 mod routes;
 mod types;
 
-use db::{AppState, postgres, redis_helper};
+use db::{postgres, redis_helper, AppState};
+use middleware::cors::DynamicCors;
 
 #[tokio::main]
 async fn main() {
@@ -24,7 +25,7 @@ async fn main() {
     let app = Router::new()
         .merge(routes::all())
         .with_state(state.clone())
-        .layer(CorsLayer::permissive());
+        .layer(DynamicCors);
 
     let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".into());
     let port: u16 = std::env::var("PORT")
