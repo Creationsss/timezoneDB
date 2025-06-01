@@ -1,5 +1,5 @@
-use redis::Client;
 use redis::aio::MultiplexedConnection;
+use redis::Client;
 use std::env;
 
 pub async fn connect() -> MultiplexedConnection {

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Timezone DB</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js" defer></script>
+
+    <link rel="stylesheet" href="/public/css/style.css" />
+    <script src="/public/js/index.js" defer></script>
+</head>
+
+<body>
+    <main>
+        <section id="login-section" class="hidden">
+            <h1>Timezone DB</h1>
+            <a href="/auth/discord?redirect=/" id="login-btn">Log in with Discord</a>
+        </section>
+
+        <section id="timezone-section" class="hidden">
+            <div class="profile">
+                <img id="avatar" class="hidden" width="80" height="80" alt="Avatar" />
+                <h2 id="auth-status">Logged in</h2>
+            </div>
+
+            <label for="timezone-select">Select your timezone:</label>
+            <select id="timezone-select">
+                <option value="">Select timezone</option>
+            </select>
+            <button id="set-timezone">Save</button>
+            <button id="delete-timezone" class="danger hidden">Delete Timezone</button>
+
+            <p id="status-msg"></p>
+        </section>
+    </main>
+</body>
+
+</html>

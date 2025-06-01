@@ -2,20 +2,22 @@ use crate::db::AppState;
 
 use crate::types::JsonMessage;
 use axum::{
-    Json,
     extract::{Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
+    Json,
 };
 use headers::{Cookie, HeaderMapExt};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
-use std::env;
+use sqlx::Row;
+use std::{collections::HashMap, env};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct CallbackQuery {
     code: String,
+    state: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -77,14 +79,18 @@ pub async fn get_user_from_session(
     Ok(user)
 }
 
-pub async fn start_oauth(State(_): State<AppState>) -> impl IntoResponse {
+pub async fn start_oauth(Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
     let client_id = env::var("CLIENT_ID").unwrap_or_default();
     let redirect_uri = env::var("REDIRECT_URI").unwrap_or_default();
 
-    let url = format!(
-        "https://discord.com/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
-        client_id, redirect_uri
-    );
+    let mut url = format!(
+		"https://discord.com/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
+		client_id, redirect_uri
+	);
+
+    if let Some(redirect) = params.get("redirect") {
+        url.push_str(&format!("&state={}", urlencoding::encode(redirect)));
+    }
 
     (StatusCode::FOUND, [(axum::http::header::LOCATION, url)]).into_response()
 }
@@ -177,6 +183,13 @@ pub async fn handle_callback(
         )
         .await;
 
+    let redirect_target = match &query.state {
+        Some(s) => urlencoding::decode(s)
+            .map(|s| s.into_owned())
+            .unwrap_or("/".to_string()),
+        None => "/".to_string(),
+    };
+
     let mut headers = HeaderMap::new();
     headers.insert(
         "Set-Cookie",
@@ -187,21 +200,51 @@ pub async fn handle_callback(
         .parse()
         .unwrap(),
     );
+    headers.insert(
+        axum::http::header::LOCATION,
+        redirect_target.parse().unwrap(),
+    );
 
-    (
-        StatusCode::OK,
-        headers,
-        Json(AuthResponse {
-            user,
-            session: session_id,
-        }),
-    )
-        .into_response()
+    (StatusCode::FOUND, headers).into_response()
 }
 
 pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
     match get_user_from_session(&headers, &state).await {
-        Ok(user) => (StatusCode::OK, Json(user)).into_response(),
+        Ok(user) => {
+            let result = sqlx::query("SELECT timezone FROM timezones WHERE user_id = $1")
+                .bind(&user.id)
+                .fetch_optional(&state.db)
+                .await;
+
+            match result {
+                Ok(Some(row)) => {
+                    let timezone: String = row.get("timezone");
+                    (
+                        StatusCode::OK,
+                        Json(serde_json::json!({
+                            "user": user,
+                            "timezone": timezone
+                        })),
+                    )
+                        .into_response()
+                }
+                Ok(None) => (
+                    StatusCode::OK,
+                    Json(serde_json::json!({
+                        "user": user,
+                        "timezone": null
+                    })),
+                )
+                    .into_response(),
+                Err(_) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(JsonMessage {
+                        message: "Failed to fetch timezone".into(),
+                    }),
+                )
+                    .into_response(),
+            }
+        }
         Err(err) => err.into_response(),
     }
 }

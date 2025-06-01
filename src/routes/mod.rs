@@ -1,10 +1,12 @@
 use crate::db::AppState;
 use axum::{
     http::{HeaderValue, StatusCode},
-    response::Response,
+    response::{Html, Response},
     routing::{get, options},
     Router,
 };
+use std::fs;
+use tower_http::services::ServeDir;
 
 pub mod auth;
 mod timezone;
@@ -33,8 +35,16 @@ async fn preflight_handler() -> Response {
     res
 }
 
+async fn index_page() -> Html<String> {
+    Html(
+        fs::read_to_string("public/index.html")
+            .unwrap_or_else(|_| "<h1>404 Not Found</h1>".to_string()),
+    )
+}
+
 pub fn all() -> Router<AppState> {
     Router::new()
+        .route("/", get(index_page))
         .route("/get", get(timezone::get_timezone))
         .route("/set", get(timezone::set_timezone))
         .route("/set", options(preflight_handler))
@@ -43,4 +53,6 @@ pub fn all() -> Router<AppState> {
         .route("/auth/discord", get(auth::start_oauth))
         .route("/auth/discord/callback", get(auth::handle_callback))
         .route("/me", get(auth::me))
+        .nest_service("/public", ServeDir::new("public"))
+        .fallback(get(index_page))
 }
