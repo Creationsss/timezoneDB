@@ -1,4 +1,3 @@
-# Stage 1: Build
 FROM rustlang/rust:nightly AS builder
 
 WORKDIR /app
