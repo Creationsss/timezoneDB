@@ -2,13 +2,13 @@ use crate::db::AppState;
 use axum::{
     http::{HeaderValue, StatusCode},
     response::{Html, Response},
-    routing::{get, options},
+    routing::{delete, get, options, post},
     Router,
 };
 use std::fs;
 use tower_http::services::ServeDir;
 
-pub mod auth;
+mod auth;
 mod timezone;
 
 async fn preflight_handler() -> Response {
@@ -18,7 +18,7 @@ async fn preflight_handler() -> Response {
     headers.insert("access-control-allow-origin", HeaderValue::from_static("*"));
     headers.insert(
         "access-control-allow-methods",
-        HeaderValue::from_static("GET, POST, OPTIONS"),
+        HeaderValue::from_static("GET, POST, DELETE, OPTIONS"),
     );
     headers.insert(
         "access-control-allow-headers",
@@ -46,9 +46,9 @@ pub fn all() -> Router<AppState> {
     Router::new()
         .route("/", get(index_page))
         .route("/get", get(timezone::get_timezone))
-        .route("/set", get(timezone::set_timezone))
+        .route("/set", post(timezone::set_timezone))
         .route("/set", options(preflight_handler))
-        .route("/delete", get(timezone::delete_timezone))
+        .route("/delete", delete(timezone::delete_timezone))
         .route("/list", get(timezone::list_timezones))
         .route("/auth/discord", get(auth::start_oauth))
         .route("/auth/discord/callback", get(auth::handle_callback))

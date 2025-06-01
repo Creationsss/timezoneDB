@@ -46,11 +46,12 @@ docker compose up --build
 
 Returns stored timezone and username for the given user ID.
 
-### `GET /set?timezone=<iana_timezone>`
+### `POST /set`
 
-Stores timezone for the authenticated user. Requires Discord OAuth session.
+Stores timezone for the authenticated user. Requires Discord OAuth session.  
+Body: `application/x-www-form-urlencoded` with `timezone=<iana_timezone>`
 
-### `GET /delete`
+### `DELETE /delete`
 
 Deletes the authenticated user's timezone entry. Requires Discord OAuth session.
 
@@ -69,7 +70,3 @@ Starts OAuth2 authentication flow.
 ### `GET /auth/discord/callback`
 
 Handles OAuth2 redirect and sets a session cookie.
-
-## License
-
-[BSD-3-Clause](LICENSE)

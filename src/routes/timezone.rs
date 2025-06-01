@@ -5,7 +5,7 @@ use axum::{
     extract::{Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    Json,
+    Form, Json,
 };
 use chrono_tz::Tz;
 use headers::{Cookie, HeaderMapExt};
@@ -182,7 +182,7 @@ pub async fn delete_timezone(
 pub async fn set_timezone(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Query(query): Query<SetQuery>,
+    Form(query): Form<SetQuery>,
 ) -> impl IntoResponse {
     let Some(cookie_header) = headers.typed_get::<Cookie>() else {
         return (

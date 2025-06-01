@@ -52,7 +52,11 @@ async function fetchUserInfo() {
 
 		deleteBtn.addEventListener("click", async () => {
 			try {
-				const res = await fetch("/delete", { credentials: "include" });
+				const res = await fetch("/delete", {
+					method: "DELETE",
+					credentials: "include"
+				});
+
 				if (!res.ok) throw new Error();
 
 				ts.clear();
@@ -74,8 +78,11 @@ setBtn.addEventListener("click", async () => {
 	if (!timezone) return;
 
 	try {
-		const res = await fetch(`/set?timezone=${encodeURIComponent(timezone)}`, {
+		const res = await fetch("/set", {
+			method: "POST",
 			credentials: "include",
+			headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			body: `timezone=${encodeURIComponent(timezone)}`
 		});
 		if (!res.ok) throw new Error();
 		statusMsg.textContent = "Timezone updated!";
