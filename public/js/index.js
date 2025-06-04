@@ -7,18 +7,19 @@ const setBtn = document.getElementById("set-timezone");
 const statusMsg = document.getElementById("status-msg");
 
 const timezones = Intl.supportedValuesOf("timeZone");
-timezones.forEach(tz => {
+
+for (const tz of timezones) {
 	const opt = document.createElement("option");
 	opt.value = tz;
 	opt.textContent = tz;
 	timezoneSelect.appendChild(opt);
-});
+}
 
 const ts = new TomSelect("#timezone-select", {
 	create: false,
 	sorted: true,
 	searchField: ["text"],
-	maxOptions: 1000
+	maxOptions: 1000,
 });
 
 async function fetchUserInfo() {
@@ -54,7 +55,7 @@ async function fetchUserInfo() {
 			try {
 				const res = await fetch("/delete", {
 					method: "DELETE",
-					credentials: "include"
+					credentials: "include",
 				});
 
 				if (!res.ok) throw new Error();
@@ -66,7 +67,6 @@ async function fetchUserInfo() {
 				statusMsg.textContent = "Failed to delete timezone.";
 			}
 		});
-
 	} catch {
 		loginSection.classList.remove("hidden");
 		timezoneSection.classList.add("hidden");
@@ -77,17 +77,30 @@ setBtn.addEventListener("click", async () => {
 	const timezone = ts.getValue();
 	if (!timezone) return;
 
+	setBtn.disabled = true;
+	setBtn.textContent = "Saving...";
+	statusMsg.textContent = "";
+
 	try {
 		const res = await fetch("/set", {
 			method: "POST",
 			credentials: "include",
 			headers: { "Content-Type": "application/x-www-form-urlencoded" },
-			body: `timezone=${encodeURIComponent(timezone)}`
+			body: `timezone=${encodeURIComponent(timezone)}`,
 		});
-		if (!res.ok) throw new Error();
+
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.message || "Failed to update timezone");
+		}
+
 		statusMsg.textContent = "Timezone updated!";
-	} catch {
-		statusMsg.textContent = "Failed to update timezone.";
+		document.getElementById("delete-timezone").classList.remove("hidden");
+	} catch (error) {
+		statusMsg.textContent = error.message;
+	} finally {
+		setBtn.disabled = false;
+		setBtn.textContent = "Save";
 	}
 });
 

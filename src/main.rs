@@ -1,48 +1,104 @@
 use axum::{serve, Router};
 use dotenvy::dotenv;
-use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use tracing::{error, info};
-use tracing_subscriber;
+use tracing::{error, info, warn};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod config;
 mod db;
 mod middleware;
 mod routes;
 mod types;
 
+use config::Config;
 use db::{postgres, redis_helper, AppState};
 use middleware::cors::DynamicCors;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    tracing_subscriber::fmt::init();
 
-    let db = postgres::connect().await;
-    let redis = redis_helper::connect().await;
-    let state = AppState { db, redis };
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    let config = match Config::from_env() {
+        Ok(config) => {
+            if let Err(e) = config.validate() {
+                error!("Configuration validation failed: {}", e);
+                std::process::exit(1);
+            }
+            config
+        }
+        Err(e) => {
+            error!("Failed to load configuration: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    info!("Starting timezone-db server");
+    info!("Server will bind to: {}", config.server.bind_address);
+
+    let db = match postgres::connect(&config.database).await {
+        Ok(pool) => {
+            info!("Successfully connected to PostgreSQL");
+            pool
+        }
+        Err(e) => {
+            error!("Failed to connect to PostgreSQL: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let redis = match redis_helper::connect(&config.redis).await {
+        Ok(pool) => {
+            info!("Successfully connected to Redis");
+            pool
+        }
+        Err(e) => {
+            error!("Failed to connect to Redis: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    let state = AppState {
+        db,
+        redis,
+        config: config.clone(),
+    };
 
     let app = Router::new()
         .merge(routes::all())
-        .with_state(state.clone())
+        .with_state(state)
         .layer(DynamicCors);
 
-    let host = std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".into());
-    let port: u16 = std::env::var("PORT")
-        .unwrap_or_else(|_| "3000".to_string())
-        .parse()
-        .expect("PORT must be a number");
+    let listener = match TcpListener::bind(config.server.bind_address).await {
+        Ok(listener) => listener,
+        Err(e) => {
+            error!("Failed to bind to {}: {}", config.server.bind_address, e);
+            std::process::exit(1);
+        }
+    };
 
-    let addr = format!("{}:{}", host, port)
-        .parse::<SocketAddr>()
-        .expect("Invalid HOST or PORT");
+    info!("Server listening on http://{}", config.server.bind_address);
 
-    let listener = TcpListener::bind(addr)
+    let shutdown_signal = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to install CTRL+C signal handler");
+        warn!("Shutdown signal received");
+    };
+
+    if let Err(err) = serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal)
         .await
-        .expect("Failed to bind address");
-
-    info!("Listening on http://{}", addr);
-    if let Err(err) = serve(listener, app).await {
+    {
         error!("Server error: {}", err);
+        std::process::exit(1);
     }
+
+    info!("Server has shut down gracefully");
 }

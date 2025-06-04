@@ -13,6 +13,7 @@ use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
+use tracing::error;
 
 #[derive(Serialize)]
 pub struct TimezoneResponse {
@@ -132,9 +133,22 @@ pub async fn delete_timezone(
             .into_response();
     };
 
-    let mut redis = state.redis.clone();
+    let mut redis_conn = match state.redis.get_connection().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            error!("Failed to get Redis connection: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Database connection error".into(),
+                }),
+            )
+                .into_response();
+        }
+    };
+
     let key = format!("session:{}", session_id);
-    let json: redis::RedisResult<String> = redis.get(&key).await;
+    let json: redis::RedisResult<String> = redis_conn.get(&key).await;
 
     let Ok(json) = json else {
         return (
@@ -204,9 +218,22 @@ pub async fn set_timezone(
             .into_response();
     };
 
-    let mut redis = state.redis.clone();
+    let mut redis_conn = match state.redis.get_connection().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            error!("Failed to get Redis connection: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Database connection error".into(),
+                }),
+            )
+                .into_response();
+        }
+    };
+
     let key = format!("session:{}", session_id);
-    let json: redis::RedisResult<String> = redis.get(&key).await;
+    let json: redis::RedisResult<String> = redis_conn.get(&key).await;
 
     let Ok(json) = json else {
         return (
@@ -251,11 +278,11 @@ pub async fn set_timezone(
 
     let result = sqlx::query(
         r#"
-			INSERT INTO timezones (user_id, username, timezone)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (user_id) DO UPDATE
-			SET username = EXCLUDED.username, timezone = EXCLUDED.timezone
-		"#,
+        INSERT INTO timezones (user_id, username, timezone)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (user_id) DO UPDATE
+        SET username = EXCLUDED.username, timezone = EXCLUDED.timezone
+        "#,
     )
     .bind(&user.id)
     .bind(&user.username)

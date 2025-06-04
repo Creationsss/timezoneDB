@@ -3,3 +3,4 @@
 dragonfly-data
 postgres-data
 .env
+Cargo.lock

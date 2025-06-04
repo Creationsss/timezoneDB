@@ -1,2 +1,8 @@
-postgres-data
-dragonfly-data
+target/
+postgres-data/
+dragonfly-data/
+.env
+.git/
+.gitignore
+README.md
+*.log

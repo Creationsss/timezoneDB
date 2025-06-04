@@ -1,5 +1,4 @@
 use crate::db::AppState;
-
 use crate::types::JsonMessage;
 use axum::{
     extract::{Query, State},
@@ -11,7 +10,8 @@ use headers::{Cookie, HeaderMapExt};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
+use tracing::{error, info, instrument};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -20,7 +20,7 @@ pub struct CallbackQuery {
     state: Option<String>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct DiscordUser {
     pub id: String,
     pub username: String,
@@ -34,6 +34,7 @@ pub struct AuthResponse {
     session: String,
 }
 
+#[instrument(skip(state), fields(user_id))]
 pub async fn get_user_from_session(
     headers: &HeaderMap,
     state: &AppState,
@@ -56,9 +57,20 @@ pub async fn get_user_from_session(
         ));
     };
 
-    let mut redis = state.redis.clone();
+    let mut redis_conn = state.redis.get_connection().await.map_err(|e| {
+        error!("Failed to get Redis connection: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(JsonMessage {
+                message: "Database connection error".into(),
+            }),
+        )
+    })?;
+
     let key = format!("session:{}", session_id);
-    let Ok(json) = redis.get::<_, String>(&key).await else {
+    let json: redis::RedisResult<String> = redis_conn.as_mut().get(&key).await;
+
+    let Ok(json) = json else {
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(JsonMessage {
@@ -76,32 +88,39 @@ pub async fn get_user_from_session(
         ));
     };
 
+    tracing::Span::current().record("user_id", &user.id);
     Ok(user)
 }
 
-pub async fn start_oauth(Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
-    let client_id = env::var("CLIENT_ID").unwrap_or_default();
-    let redirect_uri = env::var("REDIRECT_URI").unwrap_or_default();
+#[instrument(skip(state))]
+pub async fn start_oauth(
+    State(state): State<AppState>,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let client_id = &state.config.discord.client_id;
+    let redirect_uri = &state.config.discord.redirect_uri;
 
     let mut url = format!(
-		"https://discord.com/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
-		client_id, redirect_uri
-	);
+        "https://discord.com/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
+        client_id, redirect_uri
+    );
 
     if let Some(redirect) = params.get("redirect") {
         url.push_str(&format!("&state={}", urlencoding::encode(redirect)));
     }
 
+    info!("Starting OAuth flow");
     (StatusCode::FOUND, [(axum::http::header::LOCATION, url)]).into_response()
 }
 
+#[instrument(skip(state, query), fields(user_id))]
 pub async fn handle_callback(
     State(state): State<AppState>,
     Query(query): Query<CallbackQuery>,
 ) -> impl IntoResponse {
-    let client_id = env::var("CLIENT_ID").unwrap();
-    let client_secret = env::var("CLIENT_SECRET").unwrap();
-    let redirect_uri = env::var("REDIRECT_URI").unwrap();
+    let client_id = &state.config.discord.client_id;
+    let client_secret = &state.config.discord.client_secret;
+    let redirect_uri = &state.config.discord.redirect_uri;
 
     let form = [
         ("client_id", client_id.as_str()),
@@ -118,6 +137,7 @@ pub async fn handle_callback(
         .await;
 
     let Ok(res) = token_res else {
+        error!("Failed to exchange OAuth code for token");
         return (
             StatusCode::BAD_REQUEST,
             Json(JsonMessage {
@@ -128,6 +148,7 @@ pub async fn handle_callback(
     };
 
     let Ok(token_json) = res.json::<serde_json::Value>().await else {
+        error!("Invalid token response from Discord");
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(JsonMessage {
@@ -138,6 +159,7 @@ pub async fn handle_callback(
     };
 
     let Some(access_token) = token_json["access_token"].as_str() else {
+        error!("Access token not found in Discord response");
         return (
             StatusCode::UNAUTHORIZED,
             Json(JsonMessage {
@@ -154,6 +176,7 @@ pub async fn handle_callback(
         .await;
 
     let Ok(user_res) = user_res else {
+        error!("Failed to fetch user info from Discord");
         return (
             StatusCode::BAD_REQUEST,
             Json(JsonMessage {
@@ -164,6 +187,7 @@ pub async fn handle_callback(
     };
 
     let Ok(user) = user_res.json::<DiscordUser>().await else {
+        error!("Failed to parse user info from Discord");
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(JsonMessage {
@@ -173,15 +197,42 @@ pub async fn handle_callback(
             .into_response();
     };
 
+    tracing::Span::current().record("user_id", &user.id);
+
     let session_id = Uuid::now_v7().to_string();
-    let mut redis = state.redis.clone();
-    let _ = redis
+
+    let mut redis_conn = match state.redis.get_connection().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            error!("Failed to get Redis connection: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Database connection error".into(),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    if let Err(e) = redis_conn
+        .as_mut()
         .set_ex::<_, _, ()>(
             format!("session:{}", session_id),
             serde_json::to_string(&user).unwrap(),
             3600,
         )
-        .await;
+        .await
+    {
+        error!("Failed to store session in Redis: {}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(JsonMessage {
+                message: "Failed to create session".into(),
+            }),
+        )
+            .into_response();
+    }
 
     let redirect_target = match &query.state {
         Some(s) => urlencoding::decode(s)
@@ -205,9 +256,11 @@ pub async fn handle_callback(
         redirect_target.parse().unwrap(),
     );
 
+    info!(user_id = %user.id, username = %user.username, "User logged in successfully");
     (StatusCode::FOUND, headers).into_response()
 }
 
+#[instrument(skip(state))]
 pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
     match get_user_from_session(&headers, &state).await {
         Ok(user) => {
@@ -236,13 +289,16 @@ pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> impl IntoR
                     })),
                 )
                     .into_response(),
-                Err(_) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(JsonMessage {
-                        message: "Failed to fetch timezone".into(),
-                    }),
-                )
-                    .into_response(),
+                Err(e) => {
+                    error!("Database error while fetching timezone: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(JsonMessage {
+                            message: "Failed to fetch timezone".into(),
+                        }),
+                    )
+                        .into_response()
+                }
             }
         }
         Err(err) => err.into_response(),

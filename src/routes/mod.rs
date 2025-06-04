@@ -9,6 +9,7 @@ use std::fs;
 use tower_http::services::ServeDir;
 
 mod auth;
+mod health;
 mod timezone;
 
 async fn preflight_handler() -> Response {
@@ -53,6 +54,7 @@ pub fn all() -> Router<AppState> {
         .route("/auth/discord", get(auth::start_oauth))
         .route("/auth/discord/callback", get(auth::handle_callback))
         .route("/me", get(auth::me))
+        .route("/health", get(health::health_check))
         .nest_service("/public", ServeDir::new("public"))
         .fallback(get(index_page))
 }

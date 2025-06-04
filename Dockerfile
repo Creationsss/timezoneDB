@@ -5,6 +5,7 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY public ./public
+COPY migrations ./migrations
 
 RUN cargo build --release
 
@@ -16,7 +17,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/release/timezone-db /usr/local/bin/app
 COPY --from=builder /app/public ./public
-
-ENV RUST_LOG=info
+COPY --from=builder /app/migrations ./migrations
 
 CMD ["/usr/local/bin/app"]

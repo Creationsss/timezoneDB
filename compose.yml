@@ -15,6 +15,12 @@ services:
         condition: service_started
     networks:
       - timezoneDB-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://${HOST:-localhost}:${PORT:-3000}/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   postgres:
     image: postgres:16
@@ -23,6 +29,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+      PGUSER: postgres
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
     networks:
