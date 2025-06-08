@@ -244,8 +244,21 @@ pub async fn handle_callback(
             }),
         None => {
             info!(user_id = %user.id, username = %user.username, "User logged in via API");
+
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                "Set-Cookie",
+                format!(
+                    "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
+                    session_id
+                )
+                .parse()
+                .unwrap(),
+            );
+
             return (
                 StatusCode::OK,
+                headers,
                 Json(json!({
                     "message": "Login successful",
                     "user": {
