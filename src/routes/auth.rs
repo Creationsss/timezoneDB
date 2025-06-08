@@ -9,9 +9,10 @@ use axum::{
 use headers::{Cookie, HeaderMapExt};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use sqlx::Row;
 use std::collections::HashMap;
-use tracing::{error, info, instrument};
+use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -237,8 +238,27 @@ pub async fn handle_callback(
     let redirect_target = match &query.state {
         Some(s) => urlencoding::decode(s)
             .map(|s| s.into_owned())
-            .unwrap_or("/".to_string()),
-        None => "/".to_string(),
+            .unwrap_or_else(|e| {
+                warn!("Failed to decode state parameter '{}': {}", s, e);
+                "/".to_string()
+            }),
+        None => {
+            info!(user_id = %user.id, username = %user.username, "User logged in via API");
+            return (
+                StatusCode::OK,
+                Json(json!({
+                    "message": "Login successful",
+                    "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "discriminator": user.discriminator,
+                        "avatar": user.avatar
+                    },
+                    "session_id": session_id
+                })),
+            )
+                .into_response();
+        }
     };
 
     let mut headers = HeaderMap::new();
