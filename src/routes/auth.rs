@@ -183,29 +183,45 @@ pub async fn handle_callback(
         )
         .await;
 
-    let redirect_target = match &query.state {
-        Some(s) => urlencoding::decode(s)
+    if let Some(redirect_url) = &query.state {
+        let redirect_target = urlencoding::decode(redirect_url)
             .map(|s| s.into_owned())
-            .unwrap_or("/".to_string()),
-        None => "/".to_string(),
-    };
+            .unwrap_or("/".to_string());
 
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "Set-Cookie",
-        format!(
-            "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
-            session_id
-        )
-        .parse()
-        .unwrap(),
-    );
-    headers.insert(
-        axum::http::header::LOCATION,
-        redirect_target.parse().unwrap(),
-    );
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Set-Cookie",
+            format!(
+                "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
+                session_id
+            )
+            .parse()
+            .unwrap(),
+        );
+        headers.insert(
+            axum::http::header::LOCATION,
+            redirect_target.parse().unwrap(),
+        );
 
-    (StatusCode::FOUND, headers).into_response()
+        (StatusCode::FOUND, headers).into_response()
+    } else {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Set-Cookie",
+            format!(
+                "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
+                session_id
+            )
+            .parse()
+            .unwrap(),
+        );
+
+        let response = AuthResponse {
+            user,
+            session: session_id,
+        };
+        (StatusCode::OK, headers, Json(response)).into_response()
+    }
 }
 
 pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
