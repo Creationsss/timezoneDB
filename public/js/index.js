@@ -82,13 +82,16 @@ setBtn.addEventListener("click", async () => {
 	statusMsg.textContent = "";
 
 	try {
-		const formData = new FormData();
-		formData.append("timezone", timezone);
+		const params = new URLSearchParams();
+		params.append("timezone", timezone);
 
 		const res = await fetch("/set", {
 			method: "POST",
 			credentials: "include",
-			body: formData,
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			body: params,
 		});
 
 		if (!res.ok) {
