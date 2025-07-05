@@ -165,15 +165,15 @@ button.danger:hover {
 }
 
 .open-source-logo {
-    width: 2rem;
-    height: 2rem;
+    width: 4rem;
+    height: 4rem;
     margin: 0;
     padding: 0;
     cursor: pointer;
 
     position: fixed;
-    bottom: 1rem;
-    right: 0.5rem;
+    bottom: 0.2rem;
+    right: 0.2rem;
     z-index: 1000;
 
     opacity: 0.5;

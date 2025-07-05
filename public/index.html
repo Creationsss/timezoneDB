@@ -1,49 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Timezone DB</title>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Timezone DB</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
-    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+        <link rel="stylesheet" href="/public/css/style.css" />
+        <script src="/public/js/index.js" defer></script>
+    </head>
 
-    <link rel="stylesheet" href="/public/css/style.css" />
-    <script src="/public/js/index.js" defer></script>
-</head>
+    <body>
+        <header>
+            <a
+                href="https://heliopolis.live/creations/timezoneDB"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View source code on Gitlab"
+            >
+                <img
+                    class="open-source-logo"
+                    src="/public/gitlab_logo.svg"
+                    alt="Gitlab open-source logo"
+                    style="opacity: 0.8"
+                    loading="lazy"
+                />
+            </a>
+        </header>
 
-<body>
-    <header>
-        <a href="https://git.creations.works/creations/timezoneDB" target="_blank" rel="noopener noreferrer"
-            title="View source code on Forgejo">
-            <img class="open-source-logo" src="/public/forgejo_logo.svg" alt="Forgejo open-source logo"
-                style="opacity: 0.5" loading="lazy" />
-        </a>
-    </header>
+        <main>
+            <section id="login-section" class="hidden">
+                <h1>Timezone DB</h1>
+                <a href="/auth/discord?redirect=/" id="login-btn"
+                    >Log in with Discord</a
+                >
+            </section>
 
-    <main>
-        <section id="login-section" class="hidden">
-            <h1>Timezone DB</h1>
-            <a href="/auth/discord?redirect=/" id="login-btn">Log in with Discord</a>
-        </section>
+            <section id="timezone-section" class="hidden">
+                <div class="profile">
+                    <img
+                        id="avatar"
+                        class="hidden"
+                        width="80"
+                        height="80"
+                        alt="Avatar"
+                    />
+                    <h2 id="auth-status">Logged in</h2>
+                </div>
 
-        <section id="timezone-section" class="hidden">
-            <div class="profile">
-                <img id="avatar" class="hidden" width="80" height="80" alt="Avatar" />
-                <h2 id="auth-status">Logged in</h2>
-            </div>
+                <label for="timezone-select">Select your timezone:</label>
+                <select id="timezone-select">
+                    <option value="">Select timezone</option>
+                </select>
+                <button id="set-timezone">Save</button>
+                <button id="delete-timezone" class="danger hidden">
+                    Delete Timezone
+                </button>
 
-            <label for="timezone-select">Select your timezone:</label>
-            <select id="timezone-select">
-                <option value="">Select timezone</option>
-            </select>
-            <button id="set-timezone">Save</button>
-            <button id="delete-timezone" class="danger hidden">Delete Timezone</button>
-
-            <p id="status-msg"></p>
-        </section>
-    </main>
-</body>
-
+                <p id="status-msg"></p>
+            </section>
+        </main>
+    </body>
 </html>
