@@ -3,7 +3,8 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Timezone DB</title>
+        <title>Timezone DB - Track Your Time</title>
+        <meta name="description" content="A simple timezone tracker for Discord users. Store and share your timezone with friends.">
 
         <link
             href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css"
@@ -36,9 +37,44 @@
         <main>
             <section id="login-section" class="hidden">
                 <h1>Timezone DB</h1>
-                <a href="/auth/discord?redirect=/" id="login-btn"
-                    >Log in with Discord</a
-                >
+                <p style="text-align: center; margin-bottom: 1.5rem; opacity: 0.8;">
+                    Track and share your timezone with friends
+                </p>
+                <a href="/auth/discord?redirect=/" id="login-btn">
+                    Log in with Discord
+                </a>
+
+                <div id="stats-section" class="hidden">
+                    <h3>Community Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-total-users">-</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-unique-timezones">-</div>
+                            <div class="stat-label">Unique Timezones</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-recent-users">-</div>
+                            <div class="stat-label">New This Week</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-top-timezone">-</div>
+                            <div class="stat-label">Most Popular</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-section">
+                    <h3>What is Timezone DB?</h3>
+                    <p>A simple service to store and retrieve user timezones. Perfect for Discord communities and remote teams.</p>
+
+                    <ul class="feature-list">
+                        <li>Store your timezone with Discord OAuth</li>
+                        <li>API endpoints for integrations</li>
+                    </ul>
+                </div>
             </section>
 
             <section id="timezone-section" class="hidden">
@@ -53,16 +89,48 @@
                     <h2 id="auth-status">Logged in</h2>
                 </div>
 
+                <div class="timezone-info hidden" id="timezone-info">
+                    <h4>Timezone Information</h4>
+                    <div class="offset" id="timezone-offset">UTC+0</div>
+                    <div class="description" id="timezone-description">Your current timezone</div>
+                </div>
+
+                <div class="info-cards hidden" id="info-cards">
+                    <div class="info-card">
+                        <h4>UTC Offset</h4>
+                        <div class="value" id="utc-offset">--</div>
+                    </div>
+                    <div class="info-card">
+                        <h4>Time Format</h4>
+                        <div class="value" id="time-format">12h</div>
+                    </div>
+                </div>
+
                 <label for="timezone-select">Select your timezone:</label>
                 <select id="timezone-select">
                     <option value="">Select timezone</option>
                 </select>
-                <button id="set-timezone">Save</button>
+                <button id="set-timezone">Save Timezone</button>
                 <button id="delete-timezone" class="danger hidden">
                     Delete Timezone
                 </button>
+                <button id="logout" class="danger hidden">
+                    Logout
+                </button>
 
                 <p id="status-msg"></p>
+
+                <div class="about-section">
+                    <h3>API Usage</h3>
+                    <ul class="feature-list">
+                        <li><code>GET /auth/discord</code> - Authenticate with Discord</li>
+                        <li><code>GET /logout</code> - Logout</li>
+                        <li><code>GET /get?id=DISCORD_ID</code> - Get timezone data</li>
+                        <li><code>GET /list</code> - List all stored timezones</li>
+                        <li><code>POST /set</code> - Update timezone (requires auth)</li>
+                        <li><code>GET /stats</code> - Get statistics</li>
+                    </ul>
+                </div>
             </section>
         </main>
     </body>

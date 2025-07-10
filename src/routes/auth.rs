@@ -337,3 +337,61 @@ pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> impl IntoR
         Err(err) => err.into_response(),
     }
 }
+
+#[instrument(skip(state))]
+pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
+    let Some(cookie_header) = headers.typed_get::<Cookie>() else {
+        return (
+            StatusCode::OK,
+            Json(JsonMessage {
+                message: "Already logged out".into(),
+            }),
+        )
+            .into_response();
+    };
+
+    let Some(session_id) = cookie_header.get("session") else {
+        return (
+            StatusCode::OK,
+            Json(JsonMessage {
+                message: "Already logged out".into(),
+            }),
+        )
+            .into_response();
+    };
+
+    let mut redis_conn = match state.redis.get_connection().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            error!("Failed to get Redis connection: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Database connection error".into(),
+                }),
+            )
+                .into_response();
+        }
+    };
+
+    let key = format!("session:{}", session_id);
+    let _: redis::RedisResult<()> = redis_conn.as_mut().del(&key).await;
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "Set-Cookie",
+        "session=; Max-Age=0; Path=/; SameSite=None; Secure; HttpOnly"
+            .parse()
+            .unwrap(),
+    );
+
+    info!("User logged out successfully");
+    (
+        StatusCode::OK,
+        headers,
+        Json(JsonMessage {
+            message: "Logged out successfully".into(),
+        }),
+    )
+        .into_response()
+}

@@ -10,6 +10,7 @@ use tower_http::services::ServeDir;
 
 mod auth;
 mod health;
+mod stats;
 mod timezone;
 
 async fn preflight_handler() -> Response {
@@ -49,11 +50,13 @@ pub fn all() -> Router<AppState> {
         .route("/get", get(timezone::get_timezone))
         .route("/set", post(timezone::set_timezone))
         .route("/set", options(preflight_handler))
+        .route("/stats", get(stats::get_stats))
         .route("/delete", delete(timezone::delete_timezone))
         .route("/list", get(timezone::list_timezones))
         .route("/auth/discord", get(auth::start_oauth))
         .route("/auth/discord/callback", get(auth::handle_callback))
         .route("/me", get(auth::me))
+        .route("/logout", get(auth::logout))
         .route("/health", get(health::health_check))
         .nest_service("/public", ServeDir::new("public"))
         .fallback(get(index_page))

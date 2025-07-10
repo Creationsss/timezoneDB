@@ -1,189 +1,386 @@
 :root {
-    --bg: #0d0d0d;
-    --fg: #f5f5f5;
-    --accent: #4ea3ff;
-    --card: #1c1c1c;
-    --border: #333;
+	--bg: #0d0d0d;
+	--fg: #f5f5f5;
+	--accent: #4ea3ff;
+	--card: #1c1c1c;
+	--border: #333;
 }
 
 * {
-    box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: system-ui, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 2rem;
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: system-ui, sans-serif;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	padding: 2rem;
 }
 
 main {
-    width: 100%;
-    max-width: 420px;
-    background: var(--card);
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 0 10px #0008;
-    border: 1px solid var(--border);
+	width: 100%;
+	max-width: 420px;
+	background: var(--card);
+	padding: 2rem;
+	border-radius: 1rem;
+	box-shadow: 0 0 10px #0008;
+	border: 1px solid var(--border);
 }
 
 h1,
 h2 {
-    text-align: center;
-    margin-bottom: 1rem;
-    color: var(--accent);
+	text-align: center;
+	margin-bottom: 1rem;
+	color: var(--accent);
 }
 
 .profile {
-    text-align: center;
-    margin-bottom: 1.5rem;
+	text-align: center;
+	margin-bottom: 1.5rem;
 }
 
 #avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    margin-bottom: 0.5rem;
+	width: 120px;
+	height: 120px;
+	border-radius: 50%;
+	border: 2px solid var(--border);
+	margin-bottom: 0.5rem;
 }
 
 label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 500;
 }
 
 select,
 button {
-    width: 100%;
-    padding: 0.6rem;
-    margin-top: 0.25rem;
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    background: var(--bg);
-    color: var(--fg);
+	width: 100%;
+	padding: 0.6rem;
+	margin-top: 0.25rem;
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	font-size: 1rem;
+	background: var(--bg);
+	color: var(--fg);
 }
 
 select:focus,
 button:hover {
-    border-color: var(--accent);
-    outline: none;
+	border-color: var(--accent);
+	outline: none;
 }
 
 #set-timezone {
-    background: var(--accent);
-    color: white;
-    margin-top: 1rem;
-    cursor: pointer;
-    transition: background 0.2s ease;
+	background: var(--accent);
+	color: white;
+	margin-top: 1rem;
+	cursor: pointer;
+	transition: background 0.2s ease;
 }
 
 #set-timezone:hover {
-    background: #2c8de6;
+	background: #2c8de6;
 }
 
 a#login-btn {
-    display: block;
-    text-align: center;
-    padding: 0.75rem;
-    margin-top: 1rem;
-    background: var(--accent);
-    color: white;
-    font-weight: bold;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    transition: background 0.2s ease;
+	display: block;
+	text-align: center;
+	padding: 0.75rem;
+	margin-top: 1rem;
+	background: var(--accent);
+	color: white;
+	font-weight: bold;
+	border-radius: 0.5rem;
+	text-decoration: none;
+	transition: background 0.2s ease;
 }
 
 a#login-btn:hover {
-    background: #2c8de6;
+	background: #2c8de6;
 }
 
 #status-msg {
-    margin-top: 1rem;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--accent);
+	margin-top: 1rem;
+	text-align: center;
+	font-size: 0.9rem;
+	color: var(--accent);
 }
 
 button.danger {
-    background: #ff4e4e;
-    color: white;
+	background: #ff4e4e;
+	color: white;
 }
 
 button.danger:hover {
-    background: #e63838;
+	background: #e63838;
+	cursor: pointer;
 }
 
 .ts-wrapper.single .ts-control {
-    background-color: var(--card);
-    color: var(--fg);
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    padding: 0.6rem;
-    font-size: 1rem;
-    box-shadow: none;
+	background-color: var(--card);
+	color: var(--fg);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	padding: 0.6rem;
+	font-size: 1rem;
+	box-shadow: none;
 }
 
 .ts-wrapper.single.focus .ts-control {
-    background-color: var(--card);
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(78, 163, 255, 0.25);
+	background-color: var(--card);
+	border-color: var(--accent);
+	box-shadow: 0 0 0 2px rgba(78, 163, 255, 0.25);
 }
 
 .ts-dropdown {
-    background-color: var(--card);
-    color: var(--fg);
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+	background-color: var(--card);
+	color: var(--fg);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .ts-dropdown .option {
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
-    transition: background 0.2s;
+	padding: 0.5rem 0.75rem;
+	cursor: pointer;
+	transition: background 0.2s;
 }
 
 .ts-dropdown .option:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+	background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ts-dropdown .option.active {
-    background-color: var(--accent);
-    color: #fff;
+	background-color: var(--accent);
+	color: #fff;
 }
 
 .ts-wrapper .ts-control input {
-    color: var(--fg);
+	color: var(--fg);
 }
 
 .open-source-logo {
-    width: 4rem;
-    height: 4rem;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
+	width: 4rem;
+	height: 4rem;
+	margin: 0;
+	padding: 0;
+	cursor: pointer;
 
-    position: fixed;
-    bottom: 0.2rem;
-    right: 0.2rem;
-    z-index: 1000;
+	position: fixed;
+	bottom: 0.2rem;
+	right: 0.2rem;
+	z-index: 1000;
 
-    opacity: 0.5;
-    transition: opacity 0.3s ease;
+	opacity: 0.5;
+	transition: opacity 0.3s ease;
 
-    &:hover {
-        opacity: 1 !important;
-    }
+	&:hover {
+		opacity: 1 !important;
+	}
 }
 
 .hidden {
-    display: none;
+	display: none;
+}
+
+/* Enhanced features styles */
+.time-display {
+	text-align: center;
+	margin: 1.5rem 0;
+	padding: 1rem;
+	background: linear-gradient(135deg, var(--card) 0%, rgba(78, 163, 255, 0.1) 100%);
+	border-radius: 0.75rem;
+	border: 1px solid var(--border);
+}
+
+.time-display h3 {
+	margin: 0 0 0.5rem 0;
+	color: var(--accent);
+	font-size: 1rem;
+}
+
+#current-time-value {
+	font-size: 2rem;
+	font-weight: bold;
+	color: var(--accent);
+	margin-bottom: 0.25rem;
+	font-family: 'Courier New', monospace;
+}
+
+#current-date-value {
+	font-size: 0.9rem;
+	color: var(--fg);
+	opacity: 0.8;
+}
+
+.info-cards {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	margin: 1rem 0;
+}
+
+.info-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	padding: 1rem;
+	text-align: center;
+}
+
+.info-card h4 {
+	margin: 0 0 0.5rem 0;
+	color: var(--accent);
+	font-size: 0.9rem;
+}
+
+.info-card .value {
+	font-size: 1.1rem;
+	font-weight: bold;
+	color: var(--fg);
+}
+
+.timezone-info {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	padding: 1rem;
+	margin: 1rem 0;
+}
+
+.timezone-info h4 {
+	margin: 0 0 0.5rem 0;
+	color: var(--accent);
+	font-size: 0.9rem;
+}
+
+.timezone-info .offset {
+	font-size: 1.1rem;
+	color: var(--fg);
+	margin-bottom: 0.5rem;
+}
+
+.timezone-info .description {
+	font-size: 0.8rem;
+	color: var(--fg);
+	opacity: 0.7;
+}
+
+.about-section {
+	margin-top: 2rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--border);
+}
+
+.about-section h3 {
+	color: var(--accent);
+	font-size: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.about-section p {
+	font-size: 0.9rem;
+	color: var(--fg);
+	opacity: 0.8;
+	line-height: 1.4;
+	margin-bottom: 0.5rem;
+}
+
+.feature-list {
+	font-size: 0.85rem;
+	color: var(--fg);
+	opacity: 0.7;
+	margin-top: 1rem;
+	padding-left: 1rem;
+}
+
+.feature-list li {
+	margin-bottom: 0.5rem;
+}
+
+.feature-list code {
+	background: var(--bg);
+	padding: 0.2rem 0.4rem;
+	border-radius: 0.25rem;
+	font-family: 'Courier New', monospace;
+	color: var(--accent);
+}
+
+@media (max-width: 480px) {
+	.info-cards {
+		grid-template-columns: 1fr;
+	}
+
+	#current-time-value {
+		font-size: 1.5rem;
+	}
+}
+
+.stats-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	margin: 1rem 0 1.5rem;
+}
+
+.stat-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	padding: 1rem;
+	text-align: center;
+	transition: transform 0.2s ease, border-color 0.2s ease;
+	box-sizing: border-box;
+}
+
+.stat-card:hover {
+	transform: translateY(-2px);
+	border-color: var(--accent);
+}
+
+.stat-value {
+	font-size: 1.5rem;
+	font-weight: bold;
+	color: var(--accent);
+	margin-bottom: 0.3rem;
+}
+
+.stat-label {
+	font-size: 0.8rem;
+	color: var(--fg);
+	opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+	.info-cards {
+		grid-template-columns: 1fr;
+	}
+
+	#current-time-value {
+		font-size: 1.5rem;
+	}
+
+	.stats-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.stat-card {
+		max-width: 100%;
+	}
+
+	#stats-section {
+		margin-top: 2rem;
+		padding-top: .5rem;
+		border-top: 1px solid var(--border);
+	}
+
+	#stats-section h3 {
+		text-align: center;
+	}
 }
