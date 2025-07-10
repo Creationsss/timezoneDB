@@ -9,6 +9,7 @@ use std::fs;
 use tower_http::services::ServeDir;
 
 mod auth;
+mod favicon;
 mod health;
 mod stats;
 mod timezone;
@@ -46,6 +47,7 @@ async fn index_page() -> Html<String> {
 
 pub fn all() -> Router<AppState> {
     Router::new()
+        .route("/favicon.ico", get(favicon::favicon))
         .route("/", get(index_page))
         .route("/get", get(timezone::get_timezone))
         .route("/set", post(timezone::set_timezone))
