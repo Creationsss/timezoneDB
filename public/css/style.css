@@ -324,7 +324,7 @@ button.danger:hover {
 
 .stats-grid {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: calc(50% - 0.5rem) calc(50% - 0.5rem);
 	gap: 1rem;
 	margin: 1rem 0 1.5rem;
 }
@@ -337,6 +337,10 @@ button.danger:hover {
 	text-align: center;
 	transition: transform 0.2s ease, border-color 0.2s ease;
 	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
 }
 
 .stat-card:hover {
@@ -349,12 +353,18 @@ button.danger:hover {
 	font-weight: bold;
 	color: var(--accent);
 	margin-bottom: 0.3rem;
+	box-sizing: border-box;
+	word-break: break-word;
 }
 
 .stat-label {
 	font-size: 0.8rem;
 	color: var(--fg);
 	opacity: 0.8;
+}
+
+#stat-top-timezone {
+	font-size: 0.9rem;
 }
 
 @media (max-width: 480px) {
