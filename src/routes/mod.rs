@@ -45,10 +45,18 @@ async fn index_page() -> Html<String> {
     )
 }
 
+async fn privacy_page() -> Html<String> {
+    Html(
+        fs::read_to_string("public/privacy.html")
+            .unwrap_or_else(|_| "<h1>404 Not Found</h1>".to_string()),
+    )
+}
+
 pub fn all() -> Router<AppState> {
     Router::new()
         .route("/favicon.ico", get(favicon::favicon))
         .route("/", get(index_page))
+        .route("/privacy", get(privacy_page))
         .route("/get", get(timezone::get_timezone))
         .route("/set", post(timezone::set_timezone))
         .route("/set", options(preflight_handler))
