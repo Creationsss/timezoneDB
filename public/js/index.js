@@ -27,12 +27,16 @@ let userPreferred24Hour = null;
 
 function detectBrowserTimeFormat() {
 	const testFormatter = new Intl.DateTimeFormat(navigator.language, {
-		hour: 'numeric',
-		minute: '2-digit'
+		hour: "numeric",
+		minute: "2-digit",
 	});
-	const testTime = testFormatter.format(new Date('2023-01-01 13:00:00'));
-	return !(testTime.includes('PM') || testTime.includes('AM') ||
-		testTime.includes('pm') || testTime.includes('am'));
+	const testTime = testFormatter.format(new Date("2023-01-01 13:00:00"));
+	return !(
+		testTime.includes("PM") ||
+		testTime.includes("AM") ||
+		testTime.includes("pm") ||
+		testTime.includes("am")
+	);
 }
 
 function getCurrentTimeFormat() {
@@ -44,22 +48,22 @@ function getCurrentTimeFormat() {
 
 function saveTimeFormatPreference(is24Hour) {
 	userPreferred24Hour = is24Hour;
-	localStorage.setItem('timeFormat24Hour', is24Hour.toString());
+	localStorage.setItem("timeFormat24Hour", is24Hour.toString());
 }
 
 function loadTimeFormatPreference() {
-	const saved = localStorage.getItem('timeFormat24Hour');
+	const saved = localStorage.getItem("timeFormat24Hour");
 	if (saved !== null) {
-		userPreferred24Hour = saved === 'true';
+		userPreferred24Hour = saved === "true";
 	}
 }
 
 function createTimeDisplay() {
-	if (document.getElementById('time-display')) return;
+	if (document.getElementById("time-display")) return;
 
-	const timeContainer = document.createElement('div');
-	timeContainer.id = 'time-display';
-	timeContainer.className = 'time-display hidden';
+	const timeContainer = document.createElement("div");
+	timeContainer.id = "time-display";
+	timeContainer.className = "time-display hidden";
 	timeContainer.innerHTML = `
         <div class="current-time">
             <h3>Your Current Time</h3>
@@ -68,16 +72,16 @@ function createTimeDisplay() {
         </div>
     `;
 
-	const profileSection = document.querySelector('.profile');
+	const profileSection = document.querySelector(".profile");
 	profileSection.after(timeContainer);
 }
 
 function updateTime(timezone) {
 	if (!timezone) return;
 
-	const timeDisplay = document.getElementById('time-display');
-	const timeValue = document.getElementById('current-time-value');
-	const dateValue = document.getElementById('current-date-value');
+	const timeDisplay = document.getElementById("time-display");
+	const timeValue = document.getElementById("current-time-value");
+	const dateValue = document.getElementById("current-date-value");
 
 	if (!timeDisplay || !timeValue || !dateValue) return;
 
@@ -86,23 +90,23 @@ function updateTime(timezone) {
 
 	const formatter = new Intl.DateTimeFormat(navigator.language, {
 		timeZone: timezone,
-		hour: '2-digit',
-		minute: '2-digit',
-		second: '2-digit',
-		hour12: !is24Hour
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+		hour12: !is24Hour,
 	});
 
 	const dateFormatter = new Intl.DateTimeFormat(navigator.language, {
 		timeZone: timezone,
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric'
+		weekday: "long",
+		year: "numeric",
+		month: "long",
+		day: "numeric",
 	});
 
 	timeValue.textContent = formatter.format(now);
 	dateValue.textContent = dateFormatter.format(now);
-	timeDisplay.classList.remove('hidden');
+	timeDisplay.classList.remove("hidden");
 }
 
 function updateTimezoneInfo(timezone) {
@@ -111,28 +115,29 @@ function updateTimezoneInfo(timezone) {
 	const now = new Date();
 	const offsetFormatter = new Intl.DateTimeFormat(navigator.language, {
 		timeZone: timezone,
-		timeZoneName: 'longOffset'
+		timeZoneName: "longOffset",
 	});
 
 	const offsetParts = offsetFormatter.formatToParts(now);
-	const offset = offsetParts.find(part => part.type === 'timeZoneName')?.value || 'UTC';
+	const offset =
+		offsetParts.find((part) => part.type === "timeZoneName")?.value || "UTC";
 
-	const infoSection = document.getElementById('timezone-info');
-	const infoCards = document.getElementById('info-cards');
-	const offsetEl = document.getElementById('timezone-offset');
-	const descriptionEl = document.getElementById('timezone-description');
-	const utcOffsetEl = document.getElementById('utc-offset');
-	const timeFormatEl = document.getElementById('time-format');
+	const infoSection = document.getElementById("timezone-info");
+	const infoCards = document.getElementById("info-cards");
+	const offsetEl = document.getElementById("timezone-offset");
+	const descriptionEl = document.getElementById("timezone-description");
+	const utcOffsetEl = document.getElementById("utc-offset");
+	const timeFormatEl = document.getElementById("time-format");
 
 	if (infoSection && offsetEl && descriptionEl) {
 		offsetEl.textContent = offset;
-		descriptionEl.textContent = timezone.replace(/_/g, ' ');
+		descriptionEl.textContent = timezone.replace(/_/g, " ");
 		utcOffsetEl.textContent = offset;
 
 		const is24Hour = getCurrentTimeFormat();
-		timeFormatEl.textContent = is24Hour ? '24h' : '12h';
-		timeFormatEl.style.cursor = 'pointer';
-		timeFormatEl.title = 'Click to toggle between 12h and 24h format';
+		timeFormatEl.textContent = is24Hour ? "24h" : "12h";
+		timeFormatEl.style.cursor = "pointer";
+		timeFormatEl.title = "Click to toggle between 12h and 24h format";
 
 		timeFormatEl.onclick = () => {
 			const newFormat = !getCurrentTimeFormat();
@@ -141,26 +146,25 @@ function updateTimezoneInfo(timezone) {
 			updateTime(timezone);
 		};
 
-		infoSection.classList.remove('hidden');
-		infoCards.classList.remove('hidden');
+		infoSection.classList.remove("hidden");
+		infoCards.classList.remove("hidden");
 	}
 }
 
 async function fetchStats() {
 	try {
-		const response = await fetch('/stats', { credentials: 'include' });
+		const response = await fetch("/stats", { credentials: "include" });
 		if (!response.ok) throw new Error();
 
 		const json = await response.json();
 
 		const section = document.getElementById("stats-section");
 		const statsElements = {
-			totalUsers: document.getElementById('stat-total-users'),
-			uniqueTimezones: document.getElementById('stat-unique-timezones'),
-			recentUsers: document.getElementById('stat-recent-users'),
-			topTimezones: document.getElementById('stat-top-timezone')
-		}
-
+			totalUsers: document.getElementById("stat-total-users"),
+			uniqueTimezones: document.getElementById("stat-unique-timezones"),
+			recentUsers: document.getElementById("stat-recent-users"),
+			topTimezones: document.getElementById("stat-top-timezone"),
+		};
 
 		if (json) {
 			statsElements.totalUsers.textContent = json.total_users;
@@ -168,13 +172,12 @@ async function fetchStats() {
 			statsElements.recentUsers.textContent = json.recent_registrations;
 			statsElements.topTimezones.textContent = json.top_timezone;
 
-			section.classList.remove('hidden');
+			section.classList.remove("hidden");
 		}
-	}
-	catch (error) {
+	} catch (error) {
 		console.error(error);
 	}
-};
+}
 
 async function fetchUserInfo() {
 	try {
@@ -198,10 +201,11 @@ async function fetchUserInfo() {
 		const deleteBtn = document.getElementById("delete-timezone");
 		const logoutBtn = document.getElementById("logout");
 
+		logoutBtn.classList.remove("hidden");
+
 		if (tz) {
 			ts.setValue(tz);
 			deleteBtn.classList.remove("hidden");
-			logoutBtn.classList.remove("hidden");
 
 			if (timeInterval) clearInterval(timeInterval);
 			createTimeDisplay();
@@ -212,13 +216,13 @@ async function fetchUserInfo() {
 			ts.clear();
 			deleteBtn.classList.add("hidden");
 			if (timeInterval) clearInterval(timeInterval);
-			const timeDisplay = document.getElementById('time-display');
-			const timezoneInfo = document.getElementById('timezone-info');
-			const infoCards = document.getElementById('info-cards');
+			const timeDisplay = document.getElementById("time-display");
+			const timezoneInfo = document.getElementById("timezone-info");
+			const infoCards = document.getElementById("info-cards");
 
-			if (timeDisplay) timeDisplay.classList.add('hidden');
-			if (timezoneInfo) timezoneInfo.classList.add('hidden');
-			if (infoCards) infoCards.classList.add('hidden');
+			if (timeDisplay) timeDisplay.classList.add("hidden");
+			if (timezoneInfo) timezoneInfo.classList.add("hidden");
+			if (infoCards) infoCards.classList.add("hidden");
 		}
 
 		deleteBtn.addEventListener("click", async () => {
@@ -235,13 +239,13 @@ async function fetchUserInfo() {
 				deleteBtn.classList.add("hidden");
 
 				if (timeInterval) clearInterval(timeInterval);
-				const timeDisplay = document.getElementById('time-display');
-				const timezoneInfo = document.getElementById('timezone-info');
-				const infoCards = document.getElementById('info-cards');
+				const timeDisplay = document.getElementById("time-display");
+				const timezoneInfo = document.getElementById("timezone-info");
+				const infoCards = document.getElementById("info-cards");
 
-				if (timeDisplay) timeDisplay.classList.add('hidden');
-				if (timezoneInfo) timezoneInfo.classList.add('hidden');
-				if (infoCards) infoCards.classList.add('hidden');
+				if (timeDisplay) timeDisplay.classList.add("hidden");
+				if (timezoneInfo) timezoneInfo.classList.add("hidden");
+				if (infoCards) infoCards.classList.add("hidden");
 			} catch {
 				statusMsg.textContent = "Failed to delete timezone.";
 			}

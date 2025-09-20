@@ -2,7 +2,7 @@ use crate::db::AppState;
 use crate::types::JsonMessage;
 use axum::{
     extract::{Query, State},
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, HeaderValue, StatusCode},
     response::IntoResponse,
     Json,
 };
@@ -29,17 +29,10 @@ pub struct DiscordUser {
     pub avatar: Option<String>,
 }
 
-#[derive(Serialize)]
-pub struct AuthResponse {
-    user: DiscordUser,
-    session: String,
-}
-
-#[instrument(skip(state), fields(user_id))]
-pub async fn get_user_from_session(
+pub async fn validate_session(
     headers: &HeaderMap,
     state: &AppState,
-) -> Result<DiscordUser, impl IntoResponse> {
+) -> Result<DiscordUser, (StatusCode, Json<JsonMessage>)> {
     let Some(cookie_header) = headers.typed_get::<Cookie>() else {
         return Err((
             StatusCode::UNAUTHORIZED,
@@ -89,6 +82,46 @@ pub async fn get_user_from_session(
         ));
     };
 
+    Ok(user)
+}
+
+fn create_session_cookie(session_id: &str) -> Result<HeaderValue, (StatusCode, Json<JsonMessage>)> {
+    format!(
+        "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
+        session_id
+    )
+    .parse()
+    .map_err(|e| {
+        error!("Failed to create cookie header: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(JsonMessage {
+                message: "Failed to create session".into(),
+            }),
+        )
+    })
+}
+
+fn create_logout_cookie() -> Result<HeaderValue, (StatusCode, Json<JsonMessage>)> {
+    "session=; Max-Age=0; Path=/; SameSite=None; Secure; HttpOnly"
+        .parse()
+        .map_err(|e| {
+            error!("Failed to create logout cookie header: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Logout failed".into(),
+                }),
+            )
+        })
+}
+
+#[instrument(skip(state), fields(user_id))]
+pub async fn get_user_from_session(
+    headers: &HeaderMap,
+    state: &AppState,
+) -> Result<DiscordUser, (StatusCode, Json<JsonMessage>)> {
+    let user = validate_session(headers, state).await?;
     tracing::Span::current().record("user_id", &user.id);
     Ok(user)
 }
@@ -131,7 +164,8 @@ pub async fn handle_callback(
         ("redirect_uri", redirect_uri.as_str()),
     ];
 
-    let token_res = reqwest::Client::new()
+    let token_res = state
+        .http_client
         .post("https://discord.com/api/oauth2/token")
         .form(&form)
         .send()
@@ -170,7 +204,8 @@ pub async fn handle_callback(
             .into_response();
     };
 
-    let user_res = reqwest::Client::new()
+    let user_res = state
+        .http_client
         .get("https://discord.com/api/users/@me")
         .header("Authorization", format!("Bearer {}", access_token))
         .send()
@@ -216,13 +251,23 @@ pub async fn handle_callback(
         }
     };
 
+    let user_json = match serde_json::to_string(&user) {
+        Ok(json) => json,
+        Err(e) => {
+            error!("Failed to serialize user data: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Failed to create session".into(),
+                }),
+            )
+                .into_response();
+        }
+    };
+
     if let Err(e) = redis_conn
         .as_mut()
-        .set_ex::<_, _, ()>(
-            format!("session:{}", session_id),
-            serde_json::to_string(&user).unwrap(),
-            3600,
-        )
+        .set_ex::<_, _, ()>(format!("session:{}", session_id), user_json, 3600)
         .await
     {
         error!("Failed to store session in Redis: {}", e);
@@ -246,15 +291,11 @@ pub async fn handle_callback(
             info!(user_id = %user.id, username = %user.username, "User logged in via API");
 
             let mut headers = HeaderMap::new();
-            headers.insert(
-                "Set-Cookie",
-                format!(
-                    "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
-                    session_id
-                )
-                .parse()
-                .unwrap(),
-            );
+            let cookie_value = match create_session_cookie(&session_id) {
+                Ok(value) => value,
+                Err(err) => return err.into_response(),
+            };
+            headers.insert("Set-Cookie", cookie_value);
 
             return (
                 StatusCode::OK,
@@ -275,19 +316,24 @@ pub async fn handle_callback(
     };
 
     let mut headers = HeaderMap::new();
-    headers.insert(
-        "Set-Cookie",
-        format!(
-            "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
-            session_id
-        )
-        .parse()
-        .unwrap(),
-    );
-    headers.insert(
-        axum::http::header::LOCATION,
-        redirect_target.parse().unwrap(),
-    );
+    let cookie_value = match create_session_cookie(&session_id) {
+        Ok(value) => value,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, headers).into_response();
+        }
+    };
+    headers.insert("Set-Cookie", cookie_value);
+    let location_value = match redirect_target.parse() {
+        Ok(value) => value,
+        Err(e) => {
+            error!(
+                "Failed to parse redirect target '{}': {}",
+                redirect_target, e
+            );
+            return (StatusCode::INTERNAL_SERVER_ERROR, headers).into_response();
+        }
+    };
+    headers.insert(axum::http::header::LOCATION, location_value);
 
     info!(user_id = %user.id, username = %user.username, "User logged in successfully");
     (StatusCode::FOUND, headers).into_response()
@@ -334,7 +380,7 @@ pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> impl IntoR
                 }
             }
         }
-        Err(err) => err.into_response(),
+        Err(err) => (err.0, err.1).into_response(),
     }
 }
 
@@ -378,12 +424,11 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> impl I
     let _: redis::RedisResult<()> = redis_conn.as_mut().del(&key).await;
 
     let mut headers = HeaderMap::new();
-    headers.insert(
-        "Set-Cookie",
-        "session=; Max-Age=0; Path=/; SameSite=None; Secure; HttpOnly"
-            .parse()
-            .unwrap(),
-    );
+    let logout_cookie = match create_logout_cookie() {
+        Ok(value) => value,
+        Err(err) => return err.into_response(),
+    };
+    headers.insert("Set-Cookie", logout_cookie);
 
     info!("User logged out successfully");
     (

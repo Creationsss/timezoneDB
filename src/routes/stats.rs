@@ -23,13 +23,6 @@ pub struct TimezoneCount {
     pub count: i64,
 }
 
-#[derive(Serialize)]
-pub struct BasicStats {
-    pub total_users: i64,
-    pub total_timezones: i64,
-    pub top_timezone: Option<String>,
-}
-
 pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
     let total_users_result = sqlx::query("SELECT COUNT(*) as count FROM timezones")
         .fetch_one(&state.db)
@@ -99,8 +92,18 @@ pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
         }
     };
 
-    let total_timezones = timezone_distribution.len() as i64;
-    let unique_timezones = timezone_distribution.len() as i64;
+    let unique_timezones_result =
+        sqlx::query("SELECT COUNT(DISTINCT timezone) as count FROM timezones")
+            .fetch_one(&state.db)
+            .await;
+
+    let unique_timezones = match unique_timezones_result {
+        Ok(row) => row.get::<i64, _>("count"),
+        Err(e) => {
+            error!("Failed to get unique timezones count: {}", e);
+            timezone_distribution.len() as i64
+        }
+    };
     let top_timezone = top_timezones
         .first()
         .map(|tz| tz.timezone.clone())
@@ -108,7 +111,7 @@ pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
 
     let stats = StatsResponse {
         total_users,
-        total_timezones,
+        total_timezones: unique_timezones,
         timezone_distribution,
         top_timezones,
         unique_timezones,

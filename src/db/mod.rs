@@ -11,6 +11,7 @@ pub struct AppState {
     pub db: Db,
     pub redis: RedisPool,
     pub config: Config,
+    pub http_client: reqwest::Client,
 }
 
 impl std::fmt::Debug for AppState {

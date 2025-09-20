@@ -64,10 +64,16 @@ async fn main() {
         }
     };
 
+    let http_client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .expect("Failed to create HTTP client");
+
     let state = AppState {
         db,
         redis,
         config: config.clone(),
+        http_client,
     };
 
     let app = Router::new()

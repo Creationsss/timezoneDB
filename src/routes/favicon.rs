@@ -5,13 +5,18 @@ use std::fs;
 
 pub async fn favicon() -> Response {
     match fs::read("public/favicon.ico") {
-        Ok(content) => Response::builder()
+        Ok(content) => match Response::builder()
             .header(header::CONTENT_TYPE, "image/x-icon")
-            .body(Body::from(content))
-            .unwrap(),
+            .body(Body::from(content)) {
+                Ok(response) => response,
+                Err(_) => Response::builder()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .body(Body::from("Internal Server Error"))
+                    .unwrap_or_else(|_| Response::new(Body::from("Error")))
+            },
         Err(_) => Response::builder()
             .status(StatusCode::NOT_FOUND)
             .body(Body::from("404 Not Found"))
-            .unwrap(),
+            .unwrap_or_else(|_| Response::new(Body::from("Not Found"))),
     }
 }

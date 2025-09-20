@@ -6,6 +6,13 @@ use std::{
 };
 use tower::{Layer, Service};
 
+const DISCORD_DOMAINS: &[&str] = &[
+    "https://discord.com",
+    "https://discordapp.com",
+    "https://ptb.discord.com",
+    "https://canary.discord.com",
+];
+
 #[derive(Clone)]
 pub struct DynamicCors;
 
@@ -39,19 +46,35 @@ where
 
     fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
         let origin = req.headers().get("origin").cloned();
+        let method = req.method().clone();
         let mut inner = self.inner.clone();
 
         Box::pin(async move {
             let mut res = inner.call(req).await?;
 
             if let Some(origin) = origin {
-                let headers = res.headers_mut();
-                headers.insert("access-control-allow-origin", origin);
-                headers.insert(
-                    "access-control-allow-credentials",
-                    HeaderValue::from_static("true"),
-                );
-                headers.insert("vary", HeaderValue::from_static("Origin"));
+                if let Ok(origin_str) = origin.to_str() {
+                    let is_discord_origin = DISCORD_DOMAINS.contains(&origin_str);
+                    let is_read_only = method == "GET" || method == "HEAD" || method == "OPTIONS";
+
+                    // allow all origins for read-only requests, Discord domains for all requests
+                    let allow_request = is_read_only || is_discord_origin;
+
+                    if allow_request {
+                        let headers = res.headers_mut();
+                        headers.insert("access-control-allow-origin", origin);
+
+                        // only allow credentials for Discord domains
+                        if is_discord_origin {
+                            headers.insert(
+                                "access-control-allow-credentials",
+                                HeaderValue::from_static("true"),
+                            );
+                        }
+
+                        headers.insert("vary", HeaderValue::from_static("Origin"));
+                    }
+                }
             }
 
             Ok(res)

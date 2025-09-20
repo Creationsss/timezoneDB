@@ -1,5 +1,5 @@
 use crate::db::AppState;
-use crate::routes::auth::DiscordUser;
+use crate::routes::auth::validate_session;
 use crate::types::JsonMessage;
 use axum::{
     extract::{Query, State},
@@ -8,12 +8,9 @@ use axum::{
     Form, Json,
 };
 use chrono_tz::Tz;
-use headers::{Cookie, HeaderMapExt};
-use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
-use tracing::error;
 
 #[derive(Serialize)]
 pub struct TimezoneResponse {
@@ -113,61 +110,9 @@ pub async fn delete_timezone(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    let Some(cookie_header) = headers.typed_get::<Cookie>() else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Missing session cookie".into(),
-            }),
-        )
-            .into_response();
-    };
-
-    let Some(session_id) = cookie_header.get("session") else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Missing session ID".into(),
-            }),
-        )
-            .into_response();
-    };
-
-    let mut redis_conn = match state.redis.get_connection().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            error!("Failed to get Redis connection: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(JsonMessage {
-                    message: "Database connection error".into(),
-                }),
-            )
-                .into_response();
-        }
-    };
-
-    let key = format!("session:{}", session_id);
-    let json: redis::RedisResult<String> = redis_conn.get(&key).await;
-
-    let Ok(json) = json else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Session not found".into(),
-            }),
-        )
-            .into_response();
-    };
-
-    let Ok(user) = serde_json::from_str::<DiscordUser>(&json) else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Invalid user session".into(),
-            }),
-        )
-            .into_response();
+    let user = match validate_session(&headers, &state).await {
+        Ok(user) => user,
+        Err(err) => return err.into_response(),
     };
 
     let result = sqlx::query("DELETE FROM timezones WHERE user_id = $1")
@@ -198,61 +143,9 @@ pub async fn set_timezone(
     headers: HeaderMap,
     Form(query): Form<SetQuery>,
 ) -> impl IntoResponse {
-    let Some(cookie_header) = headers.typed_get::<Cookie>() else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Missing session cookie".into(),
-            }),
-        )
-            .into_response();
-    };
-
-    let Some(session_id) = cookie_header.get("session") else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Missing session ID".into(),
-            }),
-        )
-            .into_response();
-    };
-
-    let mut redis_conn = match state.redis.get_connection().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            error!("Failed to get Redis connection: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(JsonMessage {
-                    message: "Database connection error".into(),
-                }),
-            )
-                .into_response();
-        }
-    };
-
-    let key = format!("session:{}", session_id);
-    let json: redis::RedisResult<String> = redis_conn.get(&key).await;
-
-    let Ok(json) = json else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Session not found".into(),
-            }),
-        )
-            .into_response();
-    };
-
-    let Ok(user) = serde_json::from_str::<DiscordUser>(&json) else {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(JsonMessage {
-                message: "Invalid user session".into(),
-            }),
-        )
-            .into_response();
+    let user = match validate_session(&headers, &state).await {
+        Ok(user) => user,
+        Err(err) => return err.into_response(),
     };
 
     let tz_input = query.timezone.trim();
