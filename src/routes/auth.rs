@@ -235,6 +235,15 @@ pub async fn handle_callback(
 
     tracing::Span::current().record("user_id", &user.id);
 
+    if let Err(e) = sqlx::query("UPDATE timezones SET username = $1 WHERE user_id = $2")
+        .bind(&user.username)
+        .bind(&user.id)
+        .execute(&state.db)
+        .await
+    {
+        warn!("Failed to update username for user {}: {}", user.id, e);
+    }
+
     let session_id = Uuid::now_v7().to_string();
 
     let mut redis_conn = match state.redis.get_connection().await {

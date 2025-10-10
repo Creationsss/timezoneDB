@@ -78,21 +78,18 @@ pub async fn get_timezone(
 }
 
 pub async fn list_timezones(State(state): State<AppState>) -> impl IntoResponse {
-    let rows = sqlx::query("SELECT user_id, username, timezone FROM timezones")
-        .fetch_all(&state.db)
-        .await;
+    let rows = sqlx::query_as::<_, (String, String, String)>(
+        "SELECT user_id, username, timezone FROM timezones",
+    )
+    .fetch_all(&state.db)
+    .await;
 
     match rows {
         Ok(data) => {
-            let mut result = HashMap::new();
-            for r in data {
-                result.insert(
-                    r.get::<String, _>("user_id"),
-                    MinimalUserInfo {
-                        username: r.get("username"),
-                        timezone: r.get("timezone"),
-                    },
-                );
+            let build_start = std::time::Instant::now();
+            let mut result = HashMap::with_capacity(data.len());
+            for (user_id, username, timezone) in data {
+                result.insert(user_id, MinimalUserInfo { username, timezone });
             }
             (StatusCode::OK, Json(result)).into_response()
         }

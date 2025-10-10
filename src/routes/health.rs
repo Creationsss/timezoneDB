@@ -1,4 +1,4 @@
-use axum::{extract::State, response::IntoResponse, Json, http::StatusCode};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
 use crate::db::AppState;
 
