@@ -61,12 +61,21 @@ impl RedisPool {
     pub async fn get_connection(&self) -> Result<PooledConnection, RedisError> {
         let mut connections = self.connections.lock().await;
 
-        let conn = if let Some(conn) = connections.pop_front() {
-            conn
-        } else {
-            drop(connections);
-            self.create_connection().await?
-        };
+        while let Some(mut conn) = connections.pop_front() {
+            let ping_result: redis::RedisResult<String> =
+                redis::cmd("PING").query_async(&mut conn).await;
+
+            if ping_result.is_ok() {
+                drop(connections);
+                return Ok(PooledConnection {
+                    connection: Some(conn),
+                    pool: self.clone(),
+                });
+            }
+        }
+
+        drop(connections);
+        let conn = self.create_connection().await?;
 
         Ok(PooledConnection {
             connection: Some(conn),
