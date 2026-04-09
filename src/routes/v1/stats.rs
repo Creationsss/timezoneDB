@@ -1,28 +1,10 @@
 use crate::constants;
 use crate::db::AppState;
-use crate::types::JsonMessage;
+use crate::types::{JsonMessage, StatsResponse, TimezoneCount};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-use serde::Serialize;
 use sqlx::Row;
 use std::collections::HashMap;
 use tracing::error;
-
-#[derive(Serialize)]
-pub struct StatsResponse {
-    pub total_users: i64,
-    pub total_timezones: i64,
-    pub timezone_distribution: HashMap<String, i64>,
-    pub top_timezones: Vec<TimezoneCount>,
-    pub unique_timezones: i64,
-    pub top_timezone: String,
-    pub recent_registrations: i64,
-}
-
-#[derive(Serialize)]
-pub struct TimezoneCount {
-    pub timezone: String,
-    pub count: i64,
-}
 
 pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
     let total_users_result = sqlx::query("SELECT COUNT(*) as count FROM timezones")

@@ -1,6 +1,6 @@
 use crate::constants;
 use crate::db::AppState;
-use crate::types::JsonMessage;
+use crate::types::{CallbackQuery, DiscordUser, JsonMessage};
 use axum::{
     extract::{Query, State},
     http::{HeaderMap, HeaderValue, StatusCode},
@@ -9,26 +9,11 @@ use axum::{
 };
 use headers::{Cookie, HeaderMapExt};
 use redis::AsyncCommands;
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::Row;
 use std::collections::HashMap;
 use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
-
-#[derive(Deserialize)]
-pub struct CallbackQuery {
-    code: String,
-    state: Option<String>,
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-pub struct DiscordUser {
-    pub id: String,
-    pub username: String,
-    pub discriminator: String,
-    pub avatar: Option<String>,
-}
 
 pub async fn validate_session(
     headers: &HeaderMap,

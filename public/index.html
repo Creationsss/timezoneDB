@@ -40,7 +40,7 @@
                 <p style="text-align: center; margin-bottom: 1.5rem; opacity: 0.8;">
                     Track and share your timezone with friends
                 </p>
-                <a href="/auth/discord?redirect=/" id="login-btn">
+                <a href="/v1/auth/discord?redirect=/" id="login-btn">
                     Log in with Discord
                 </a>
 
@@ -127,12 +127,12 @@
                 <div class="about-section">
                     <h3>API Usage</h3>
                     <ul class="feature-list">
-                        <li><code>GET /auth/discord</code> - Authenticate with Discord</li>
-                        <li><code>GET /logout</code> - Logout</li>
-                        <li><code>GET /get?id=DISCORD_ID</code> - Get timezone data</li>
-                        <li><code>GET /list</code> - List all stored timezones</li>
-                        <li><code>POST /set</code> - Update timezone (requires auth)</li>
-                        <li><code>GET /stats</code> - Get statistics</li>
+                        <li><code>GET /v1/auth/discord</code> - Authenticate with Discord</li>
+                        <li><code>GET /v1/logout</code> - Logout</li>
+                        <li><code>GET /v1/get?id=DISCORD_ID</code> - Get timezone data</li>
+                        <li><code>GET /v1/list</code> - List all stored timezones</li>
+                        <li><code>POST /v1/set</code> - Update timezone (requires auth)</li>
+                        <li><code>GET /v1/stats</code> - Get statistics</li>
                     </ul>
                 </div>
             </section>

@@ -1,6 +1,6 @@
 use crate::db::AppState;
-use crate::routes::auth::validate_session;
-use crate::types::JsonMessage;
+use crate::routes::v1::auth::validate_session;
+use crate::types::{GetQuery, JsonMessage, MinimalUserInfo, SetQuery, TimezoneResponse, UserInfo};
 use axum::{
     extract::{Query, State},
     http::{HeaderMap, StatusCode},
@@ -8,38 +8,9 @@ use axum::{
     Form, Json,
 };
 use chrono_tz::Tz;
-use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
 use tracing::error;
-
-#[derive(Serialize)]
-pub struct TimezoneResponse {
-    user: UserInfo,
-    timezone: String,
-}
-
-#[derive(Serialize)]
-struct MinimalUserInfo {
-    username: String,
-    timezone: String,
-}
-
-#[derive(Serialize)]
-pub struct UserInfo {
-    id: String,
-    username: String,
-}
-
-#[derive(Deserialize)]
-pub struct GetQuery {
-    id: String,
-}
-
-#[derive(Deserialize)]
-pub struct SetQuery {
-    timezone: String,
-}
 
 pub async fn get_timezone(
     State(state): State<AppState>,

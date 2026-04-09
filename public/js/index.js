@@ -153,7 +153,7 @@ function updateTimezoneInfo(timezone) {
 
 async function fetchStats() {
 	try {
-		const response = await fetch("/stats", { credentials: "include" });
+		const response = await fetch("/v1/stats", { credentials: "include" });
 		if (!response.ok) throw new Error();
 
 		const json = await response.json();
@@ -181,7 +181,7 @@ async function fetchStats() {
 
 async function fetchUserInfo() {
 	try {
-		const res = await fetch("/me", { credentials: "include" });
+		const res = await fetch("/v1/me", { credentials: "include" });
 		if (!res.ok) throw new Error();
 
 		const json = await res.json();
@@ -227,7 +227,7 @@ async function fetchUserInfo() {
 
 		deleteBtn.addEventListener("click", async () => {
 			try {
-				const res = await fetch("/delete", {
+				const res = await fetch("/v1/delete", {
 					method: "DELETE",
 					credentials: "include",
 				});
@@ -253,7 +253,7 @@ async function fetchUserInfo() {
 
 		logoutBtn.addEventListener("click", async () => {
 			try {
-				const res = await fetch("/logout", {
+				const res = await fetch("/v1/logout", {
 					method: "GET",
 					credentials: "include",
 				});
@@ -291,7 +291,7 @@ setBtn.addEventListener("click", async () => {
 		const params = new URLSearchParams();
 		params.append("timezone", timezone);
 
-		const res = await fetch("/set", {
+		const res = await fetch("/v1/set", {
 			method: "POST",
 			credentials: "include",
 			headers: {

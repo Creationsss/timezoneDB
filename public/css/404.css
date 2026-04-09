@@ -1,0 +1,33 @@
+.not-found {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.not-found .code {
+    font-size: 5rem;
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    font-family: 'Courier New', monospace;
+}
+
+.not-found p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+    margin-bottom: 2rem;
+}
+
+.not-found a {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: var(--accent);
+    color: white;
+    font-weight: bold;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.not-found a:hover {
+    background: #2c8de6;
+}
