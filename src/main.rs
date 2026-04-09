@@ -5,6 +5,7 @@ use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod config;
+mod constants;
 mod db;
 mod middleware;
 mod routes;
@@ -65,7 +66,9 @@ async fn main() {
     };
 
     let http_client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
+        .timeout(std::time::Duration::from_secs(
+            constants::HTTP_CLIENT_TIMEOUT_SECONDS,
+        ))
         .build()
         .expect("Failed to create HTTP client");
 

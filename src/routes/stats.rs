@@ -1,3 +1,4 @@
+use crate::constants;
 use crate::db::AppState;
 use crate::types::JsonMessage;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
@@ -59,7 +60,7 @@ pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
 
                 distribution.insert(timezone.clone(), count);
 
-                if top_zones.len() < 10 {
+                if top_zones.len() < constants::TOP_TIMEZONES_LIMIT {
                     top_zones.push(TimezoneCount { timezone, count });
                 }
             }
@@ -78,9 +79,10 @@ pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
         }
     };
 
-    let recent_registrations_result = sqlx::query(
-        "SELECT COUNT(*) as count FROM timezones WHERE created_at > NOW() - INTERVAL '7 days'",
-    )
+    let recent_registrations_result = sqlx::query(&format!(
+        "SELECT COUNT(*) as count FROM timezones WHERE created_at > NOW() - INTERVAL '{} days'",
+        constants::RECENT_REGISTRATIONS_DAYS
+    ))
     .fetch_one(&state.db)
     .await;
 
@@ -111,7 +113,7 @@ pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
 
     let stats = StatsResponse {
         total_users,
-        total_timezones: unique_timezones,
+        total_timezones: total_users,
         timezone_distribution,
         top_timezones,
         unique_timezones,

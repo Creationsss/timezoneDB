@@ -11,6 +11,7 @@ use chrono_tz::Tz;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
+use tracing::error;
 
 #[derive(Serialize)]
 pub struct TimezoneResponse {
@@ -67,13 +68,16 @@ pub async fn get_timezone(
             }),
         )
             .into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(JsonMessage {
-                message: "Database error".into(),
-            }),
-        )
-            .into_response(),
+        Err(e) => {
+            error!("Failed to fetch timezone: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Database error".into(),
+                }),
+            )
+                .into_response()
+        }
     }
 }
 
@@ -86,20 +90,22 @@ pub async fn list_timezones(State(state): State<AppState>) -> impl IntoResponse 
 
     match rows {
         Ok(data) => {
-            let build_start = std::time::Instant::now();
             let mut result = HashMap::with_capacity(data.len());
             for (user_id, username, timezone) in data {
                 result.insert(user_id, MinimalUserInfo { username, timezone });
             }
             (StatusCode::OK, Json(result)).into_response()
         }
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(JsonMessage {
-                message: "Failed to fetch list".into(),
-            }),
-        )
-            .into_response(),
+        Err(e) => {
+            error!("Failed to fetch timezone list: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Failed to fetch list".into(),
+                }),
+            )
+                .into_response()
+        }
     }
 }
 
@@ -125,13 +131,16 @@ pub async fn delete_timezone(
             }),
         )
             .into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(JsonMessage {
-                message: "Delete failed".into(),
-            }),
-        )
-            .into_response(),
+        Err(e) => {
+            error!("Failed to delete timezone: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Delete failed".into(),
+                }),
+            )
+                .into_response()
+        }
     }
 }
 
@@ -171,7 +180,7 @@ pub async fn set_timezone(
         INSERT INTO timezones (user_id, username, timezone)
         VALUES ($1, $2, $3)
         ON CONFLICT (user_id) DO UPDATE
-        SET username = EXCLUDED.username, timezone = EXCLUDED.timezone
+        SET username = EXCLUDED.username, timezone = EXCLUDED.timezone, updated_at = NOW()
         "#,
     )
     .bind(&user.id)
@@ -188,12 +197,15 @@ pub async fn set_timezone(
             }),
         )
             .into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(JsonMessage {
-                message: "Database error".into(),
-            }),
-        )
-            .into_response(),
+        Err(e) => {
+            error!("Failed to save timezone: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Database error".into(),
+                }),
+            )
+                .into_response()
+        }
     }
 }

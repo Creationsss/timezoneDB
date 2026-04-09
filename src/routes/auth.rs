@@ -1,3 +1,4 @@
+use crate::constants;
 use crate::db::AppState;
 use crate::types::JsonMessage;
 use axum::{
@@ -42,7 +43,7 @@ pub async fn validate_session(
         ));
     };
 
-    let Some(session_id) = cookie_header.get("session") else {
+    let Some(session_id) = cookie_header.get(constants::SESSION_COOKIE_NAME) else {
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(JsonMessage {
@@ -61,7 +62,7 @@ pub async fn validate_session(
         )
     })?;
 
-    let key = format!("session:{}", session_id);
+    let key = format!("{}{}", constants::SESSION_KEY_PREFIX, session_id);
     let json: redis::RedisResult<String> = redis_conn.as_mut().get(&key).await;
 
     let Ok(json) = json else {
@@ -87,8 +88,10 @@ pub async fn validate_session(
 
 fn create_session_cookie(session_id: &str) -> Result<HeaderValue, (StatusCode, Json<JsonMessage>)> {
     format!(
-        "session={}; Max-Age=3600; Path=/; SameSite=None; Secure; HttpOnly",
-        session_id
+        "{}={}; Max-Age={}; Path=/; SameSite=None; Secure; HttpOnly",
+        constants::SESSION_COOKIE_NAME,
+        session_id,
+        constants::SESSION_TTL_SECONDS
     )
     .parse()
     .map_err(|e| {
@@ -103,17 +106,20 @@ fn create_session_cookie(session_id: &str) -> Result<HeaderValue, (StatusCode, J
 }
 
 fn create_logout_cookie() -> Result<HeaderValue, (StatusCode, Json<JsonMessage>)> {
-    "session=; Max-Age=0; Path=/; SameSite=None; Secure; HttpOnly"
-        .parse()
-        .map_err(|e| {
-            error!("Failed to create logout cookie header: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(JsonMessage {
-                    message: "Logout failed".into(),
-                }),
-            )
-        })
+    format!(
+        "{}=; Max-Age=0; Path=/; SameSite=None; Secure; HttpOnly",
+        constants::SESSION_COOKIE_NAME
+    )
+    .parse()
+    .map_err(|e| {
+        error!("Failed to create logout cookie header: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(JsonMessage {
+                message: "Logout failed".into(),
+            }),
+        )
+    })
 }
 
 #[instrument(skip(state), fields(user_id))]
@@ -135,8 +141,10 @@ pub async fn start_oauth(
     let redirect_uri = &state.config.discord.redirect_uri;
 
     let mut url = format!(
-        "https://discord.com/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
-        client_id, redirect_uri
+        "{}?client_id={}&redirect_uri={}&response_type=code&scope=identify",
+        constants::DISCORD_OAUTH_AUTHORIZE_URL,
+        client_id,
+        redirect_uri
     );
 
     if let Some(redirect) = params.get("redirect") {
@@ -166,7 +174,7 @@ pub async fn handle_callback(
 
     let token_res = state
         .http_client
-        .post("https://discord.com/api/oauth2/token")
+        .post(constants::DISCORD_OAUTH_TOKEN_URL)
         .form(&form)
         .send()
         .await;
@@ -206,7 +214,7 @@ pub async fn handle_callback(
 
     let user_res = state
         .http_client
-        .get("https://discord.com/api/users/@me")
+        .get(constants::DISCORD_USER_API_URL)
         .header("Authorization", format!("Bearer {}", access_token))
         .send()
         .await;
@@ -276,7 +284,11 @@ pub async fn handle_callback(
 
     if let Err(e) = redis_conn
         .as_mut()
-        .set_ex::<_, _, ()>(format!("session:{}", session_id), user_json, 3600)
+        .set_ex::<_, _, ()>(
+            format!("{}{}", constants::SESSION_KEY_PREFIX, session_id),
+            user_json,
+            constants::SESSION_TTL_SECONDS,
+        )
         .await
     {
         error!("Failed to store session in Redis: {}", e);
@@ -290,12 +302,20 @@ pub async fn handle_callback(
     }
 
     let redirect_target = match &query.state {
-        Some(s) => urlencoding::decode(s)
-            .map(|s| s.into_owned())
-            .unwrap_or_else(|e| {
-                warn!("Failed to decode state parameter '{}': {}", s, e);
+        Some(s) => {
+            let decoded = urlencoding::decode(s)
+                .map(|s| s.into_owned())
+                .unwrap_or_else(|e| {
+                    warn!("Failed to decode state parameter '{}': {}", s, e);
+                    "/".to_string()
+                });
+            if decoded.starts_with('/') && !decoded.starts_with("//") {
+                decoded
+            } else {
+                warn!("Rejected non-relative redirect target: {}", decoded);
                 "/".to_string()
-            }),
+            }
+        }
         None => {
             info!(user_id = %user.id, username = %user.username, "User logged in via API");
 
@@ -327,9 +347,7 @@ pub async fn handle_callback(
     let mut headers = HeaderMap::new();
     let cookie_value = match create_session_cookie(&session_id) {
         Ok(value) => value,
-        Err(_) => {
-            return (StatusCode::INTERNAL_SERVER_ERROR, headers).into_response();
-        }
+        Err(err) => return err.into_response(),
     };
     headers.insert("Set-Cookie", cookie_value);
     let location_value = match redirect_target.parse() {
@@ -405,7 +423,7 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> impl I
             .into_response();
     };
 
-    let Some(session_id) = cookie_header.get("session") else {
+    let Some(session_id) = cookie_header.get(constants::SESSION_COOKIE_NAME) else {
         return (
             StatusCode::OK,
             Json(JsonMessage {
@@ -429,7 +447,7 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> impl I
         }
     };
 
-    let key = format!("session:{}", session_id);
+    let key = format!("{}{}", constants::SESSION_KEY_PREFIX, session_id);
     let _: redis::RedisResult<()> = redis_conn.as_mut().del(&key).await;
 
     let mut headers = HeaderMap::new();

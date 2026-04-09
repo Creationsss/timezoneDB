@@ -59,14 +59,16 @@ impl RedisPool {
     }
 
     pub async fn get_connection(&self) -> Result<PooledConnection, RedisError> {
-        let mut connections = self.connections.lock().await;
+        let candidates: Vec<RedisConnection> = {
+            let mut connections = self.connections.lock().await;
+            connections.drain(..).collect()
+        };
 
-        while let Some(mut conn) = connections.pop_front() {
+        for mut conn in candidates {
             let ping_result: redis::RedisResult<String> =
                 redis::cmd("PING").query_async(&mut conn).await;
 
             if ping_result.is_ok() {
-                drop(connections);
                 return Ok(PooledConnection {
                     connection: Some(conn),
                     pool: self.clone(),
@@ -74,7 +76,6 @@ impl RedisPool {
             }
         }
 
-        drop(connections);
         let conn = self.create_connection().await?;
 
         Ok(PooledConnection {
@@ -134,9 +135,11 @@ impl Drop for PooledConnection {
     fn drop(&mut self) {
         if let Some(conn) = self.connection.take() {
             let pool = self.pool.clone();
-            tokio::spawn(async move {
-                pool.return_connection(conn).await;
-            });
+            if let Ok(handle) = tokio::runtime::Handle::try_current() {
+                handle.spawn(async move {
+                    pool.return_connection(conn).await;
+                });
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 use crate::config::DatabaseConfig;
+use crate::constants;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::fs;
 use std::path::Path;
@@ -9,8 +10,12 @@ pub async fn connect(config: &DatabaseConfig) -> Result<PgPool, sqlx::Error> {
     let pool = PgPoolOptions::new()
         .max_connections(config.max_connections)
         .acquire_timeout(Duration::from_secs(config.connect_timeout_seconds))
-        .idle_timeout(Some(Duration::from_secs(600)))
-        .max_lifetime(Some(Duration::from_secs(1800)))
+        .idle_timeout(Some(Duration::from_secs(
+            constants::DB_IDLE_TIMEOUT_SECONDS,
+        )))
+        .max_lifetime(Some(Duration::from_secs(
+            constants::DB_MAX_LIFETIME_SECONDS,
+        )))
         .connect(&config.url)
         .await?;
 
@@ -37,7 +42,7 @@ async fn create_migrations_table(pool: &PgPool) -> Result<(), sqlx::Error> {
 }
 
 async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
-    let migrations_dir = Path::new("migrations");
+    let migrations_dir = Path::new(constants::MIGRATIONS_DIR);
 
     if !migrations_dir.exists() {
         warn!("Migrations directory not found, skipping migrations");
@@ -48,23 +53,21 @@ async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     match fs::read_dir(migrations_dir) {
         Ok(entries) => {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if path.extension().and_then(|s| s.to_str()) == Some("sql") {
-                        if let Some(file_name) = path.file_name().and_then(|s| s.to_str()) {
-                            migration_files.push(file_name.to_string());
-                        }
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|s| s.to_str()) == Some("sql") {
+                    if let Some(file_name) = path.file_name().and_then(|s| s.to_str()) {
+                        migration_files.push(file_name.to_string());
                     }
                 }
             }
         }
         Err(e) => {
             error!("Failed to read migrations directory: {}", e);
-            return Err(sqlx::Error::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Failed to read migrations directory: {}", e),
-            )));
+            return Err(sqlx::Error::Io(std::io::Error::other(format!(
+                "Failed to read migrations directory: {}",
+                e
+            ))));
         }
     }
 

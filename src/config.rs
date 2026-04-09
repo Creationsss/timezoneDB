@@ -1,3 +1,4 @@
+use crate::constants;
 use std::env;
 use std::net::{IpAddr, SocketAddr};
 
@@ -69,7 +70,9 @@ impl Config {
     }
 
     pub fn validate(&self) -> Result<(), ConfigError> {
-        if !self.discord.redirect_uri.starts_with("http") {
+        if !self.discord.redirect_uri.starts_with("http://")
+            && !self.discord.redirect_uri.starts_with("https://")
+        {
             return Err(ConfigError::InvalidValue {
                 var: "REDIRECT_URI".to_string(),
                 value: self.discord.redirect_uri.clone(),
@@ -101,20 +104,19 @@ impl Config {
 
 impl ServerConfig {
     pub fn from_env() -> Result<Self, ConfigError> {
-        let host = get_env_or("HOST", "0.0.0.0")?
+        let host = get_env_or("HOST", constants::DEFAULT_HOST)?
             .parse::<IpAddr>()
             .map_err(|e| ConfigError::ParseError {
                 var: "HOST".to_string(),
                 source: Box::new(e),
             })?;
 
-        let port =
-            get_env_or("PORT", "3000")?
-                .parse::<u16>()
-                .map_err(|e| ConfigError::ParseError {
-                    var: "PORT".to_string(),
-                    source: Box::new(e),
-                })?;
+        let port = get_env_or("PORT", constants::DEFAULT_PORT)?
+            .parse::<u16>()
+            .map_err(|e| ConfigError::ParseError {
+                var: "PORT".to_string(),
+                source: Box::new(e),
+            })?;
 
         let bind_address = SocketAddr::new(host, port);
 
@@ -126,19 +128,21 @@ impl DatabaseConfig {
     pub fn from_env() -> Result<Self, ConfigError> {
         let url = get_env_required("DATABASE_URL")?;
 
-        let max_connections = get_env_or("DB_MAX_CONNECTIONS", "10")?
-            .parse::<u32>()
-            .map_err(|e| ConfigError::ParseError {
-                var: "DB_MAX_CONNECTIONS".to_string(),
-                source: Box::new(e),
-            })?;
+        let max_connections =
+            get_env_or("DB_MAX_CONNECTIONS", constants::DEFAULT_DB_MAX_CONNECTIONS)?
+                .parse::<u32>()
+                .map_err(|e| ConfigError::ParseError {
+                    var: "DB_MAX_CONNECTIONS".to_string(),
+                    source: Box::new(e),
+                })?;
 
-        let connect_timeout_seconds = get_env_or("DB_CONNECT_TIMEOUT", "30")?
-            .parse::<u64>()
-            .map_err(|e| ConfigError::ParseError {
-                var: "DB_CONNECT_TIMEOUT".to_string(),
-                source: Box::new(e),
-            })?;
+        let connect_timeout_seconds =
+            get_env_or("DB_CONNECT_TIMEOUT", constants::DEFAULT_DB_CONNECT_TIMEOUT)?
+                .parse::<u64>()
+                .map_err(|e| ConfigError::ParseError {
+                    var: "DB_CONNECT_TIMEOUT".to_string(),
+                    source: Box::new(e),
+                })?;
 
         Ok(DatabaseConfig {
             url,
@@ -152,19 +156,22 @@ impl RedisConfig {
     pub fn from_env() -> Result<Self, ConfigError> {
         let url = get_env_required("REDIS_URL")?;
 
-        let pool_size = get_env_or("REDIS_POOL_SIZE", "5")?
+        let pool_size = get_env_or("REDIS_POOL_SIZE", constants::DEFAULT_REDIS_POOL_SIZE)?
             .parse::<u32>()
             .map_err(|e| ConfigError::ParseError {
                 var: "REDIS_POOL_SIZE".to_string(),
                 source: Box::new(e),
             })?;
 
-        let connect_timeout_seconds = get_env_or("REDIS_CONNECT_TIMEOUT", "10")?
-            .parse::<u64>()
-            .map_err(|e| ConfigError::ParseError {
-                var: "REDIS_CONNECT_TIMEOUT".to_string(),
-                source: Box::new(e),
-            })?;
+        let connect_timeout_seconds = get_env_or(
+            "REDIS_CONNECT_TIMEOUT",
+            constants::DEFAULT_REDIS_CONNECT_TIMEOUT,
+        )?
+        .parse::<u64>()
+        .map_err(|e| ConfigError::ParseError {
+            var: "REDIS_CONNECT_TIMEOUT".to_string(),
+            source: Box::new(e),
+        })?;
 
         Ok(RedisConfig {
             url,

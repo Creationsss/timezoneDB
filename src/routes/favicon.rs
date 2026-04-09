@@ -1,10 +1,11 @@
+use crate::constants;
 use axum::body::Body;
 use axum::http::{header, StatusCode};
 use axum::response::Response;
 use std::fs;
 
 pub async fn favicon() -> Response {
-    match fs::read("public/favicon.ico") {
+    match fs::read(constants::FAVICON_PATH) {
         Ok(content) => match Response::builder()
             .header(header::CONTENT_TYPE, "image/x-icon")
             .body(Body::from(content))

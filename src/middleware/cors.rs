@@ -1,3 +1,4 @@
+use crate::constants;
 use axum::http::{HeaderValue, Request, Response};
 use std::{
     future::Future,
@@ -5,13 +6,6 @@ use std::{
     task::{Context, Poll},
 };
 use tower::{Layer, Service};
-
-const DISCORD_DOMAINS: &[&str] = &[
-    "https://discord.com",
-    "https://discordapp.com",
-    "https://ptb.discord.com",
-    "https://canary.discord.com",
-];
 
 #[derive(Clone)]
 pub struct DynamicCors;
@@ -54,7 +48,7 @@ where
 
             if let Some(origin) = origin {
                 if let Ok(origin_str) = origin.to_str() {
-                    let is_discord_origin = DISCORD_DOMAINS.contains(&origin_str);
+                    let is_discord_origin = constants::DISCORD_DOMAINS.contains(&origin_str);
                     let is_read_only = method == "GET" || method == "HEAD" || method == "OPTIONS";
 
                     // allow all origins for read-only requests, Discord domains for all requests
