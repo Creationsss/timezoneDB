@@ -1,79 +1,213 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Privacy Policy - Timezone DB</title>
-        <meta name="description" content="Privacy policy for Timezone DB - Learn how we handle your data.">
-        <link rel="stylesheet" href="/public/css/style.css" />
-        <link rel="stylesheet" href="/public/css/privacy.css" />
-    </head>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Privacy Policy - Timezone DB</title>
+		<meta
+			name="description"
+			content="How Timezone DB collects, stores and shares your data."
+		/>
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/article.css" />
+	</head>
 
-    <body>
-        <main>
-            <section class="privacy-policy">
-                <h1>Privacy Policy</h1>
-                <p><em>Last updated: July 25, 2025</em></p>
+	<body class="article-page">
+		<header class="topbar">
+			<div class="topbar-inner">
+				<a class="brand" href="/">Timezone DB</a>
+				<a class="topbar-link" href="/">Return home</a>
+			</div>
+		</header>
 
-                <h2>What We Collect</h2>
-                <p>When you use Timezone DB, we collect minimal information to provide our service:</p>
-                <ul>
-                    <li><strong>Discord Profile Information:</strong> Your Discord user ID, username, discriminator, and avatar (obtained through Discord OAuth)</li>
-                    <li><strong>Timezone Preference:</strong> The timezone you choose to store and share</li>
-                    <li><strong>Session Data:</strong> Temporary session tokens stored for 1 hour to keep you logged in</li>
-                </ul>
+		<div class="shell">
+			<nav class="sidebar">
+				<span class="nav-title">On this page</span>
+				<a href="#key-points">Key points</a>
+				<a href="#what-we-collect">What we collect</a>
+				<a href="#how-we-use-it">How we use your data</a>
+				<a href="#storage">Data storage</a>
+				<a href="#sharing">Data sharing</a>
+				<a href="#retention">Data retention</a>
+				<a href="#your-rights">Your rights</a>
+				<a href="#third-parties">Third-party services</a>
+				<a href="#security">Security</a>
+				<a href="#changes">Changes to this policy</a>
+				<a href="#contact">Contact</a>
+			</nav>
 
-                <h2>How We Use Your Data</h2>
-                <p>We use your information only to:</p>
-                <ul>
-                    <li>Store and display your timezone preference</li>
-                    <li>Authenticate you through Discord OAuth</li>
-                    <li>Provide API access to your stored timezone data</li>
-                    <li>Display basic statistics (user counts, popular timezones)</li>
-                </ul>
+			<main class="content">
+				<h1>Privacy Policy</h1>
+				<p class="updated">Last updated: July 25, 2025</p>
+				<p class="lede">
+					What Timezone DB collects when you use it, where that data lives, and how
+					to remove it.
+				</p>
 
-                <h2>Data Storage</h2>
-                <ul>
-                    <li><strong>User Data:</strong> Stored in our PostgreSQL database</li>
-                    <li><strong>Sessions:</strong> Temporarily stored in Redis cache (expires after 1 hour)</li>
-                    <li><strong>No Tracking:</strong> We don't use cookies for tracking or analytics</li>
-                </ul>
+				<section class="key-points" id="key-points">
+					<h2>Key points</h2>
+					<ul>
+						<li>
+							We keep your Discord user ID, username and the timezone you choose.
+						</li>
+						<li>
+							Your username and timezone are public through the API. That is
+							what the service is for.
+						</li>
+						<li>
+							You can delete your timezone at any time, and sessions expire after
+							1 hour.
+						</li>
+						<li>We don't sell your data or use cookies for tracking.</li>
+					</ul>
+				</section>
 
-                <h2>Data Sharing</h2>
-                <p>We do not sell, trade, or share your personal data with third parties. Your timezone information is publicly accessible through our API endpoints, as this is the core functionality of the service.</p>
+				<section class="prose" id="what-we-collect">
+					<h2>What we collect</h2>
+					<p>
+						When you use Timezone DB, we collect only what the service needs to
+						work:
+					</p>
+					<div class="table-wrap">
+						<table class="data-table">
+							<thead>
+								<tr>
+									<th>Data</th>
+									<th>Where it comes from</th>
+									<th>Kept for</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Discord user ID and username</td>
+									<td>Discord OAuth</td>
+									<td>Until you delete your timezone</td>
+								</tr>
+								<tr>
+									<td>Discord discriminator and avatar</td>
+									<td>Discord OAuth</td>
+									<td>1 hour, inside your session</td>
+								</tr>
+								<tr>
+									<td>Timezone</td>
+									<td>You choose it</td>
+									<td>Until you delete it</td>
+								</tr>
+								<tr>
+									<td>Session token</td>
+									<td>Created when you log in</td>
+									<td>1 hour</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</section>
 
-                <h2>Data Retention</h2>
-                <p>Your data is stored until you choose to delete it using the "Delete Timezone" button or by contacting us. Session data automatically expires after 1 hour.</p>
+				<section class="prose" id="how-we-use-it">
+					<h2>How we use your data</h2>
+					<p>We use your information only to:</p>
+					<ul>
+						<li>Store and display your timezone preference</li>
+						<li>Authenticate you through Discord OAuth</li>
+						<li>Provide API access to your stored timezone data</li>
+						<li>Display basic statistics (user counts, popular timezones)</li>
+					</ul>
+				</section>
 
-                <h2>Your Rights</h2>
-                <p>You can:</p>
-                <ul>
-                    <li>Update your timezone at any time</li>
-                    <li>Delete your timezone data using the delete button</li>
-                    <li>Log out to end your session immediately</li>
-                </ul>
+				<section class="prose" id="storage">
+					<h2>Data storage</h2>
+					<p>
+						Your user data is stored in our PostgreSQL database. Sessions are held in
+						Redis and expire after 1 hour. We don't use cookies for tracking or
+						analytics.
+					</p>
+				</section>
 
-                <h2>Third-Party Services</h2>
-                <p>We use Discord OAuth for authentication. Please review <a href="https://discord.com/privacy" target="_blank" rel="noopener noreferrer">Discord's Privacy Policy</a> for information about how Discord handles your data.</p>
+				<section class="prose" id="sharing">
+					<h2>Data sharing</h2>
+					<p>
+						We do not sell, trade, or share your personal data with third parties.
+						Your username and timezone are public through our
+						<a href="/docs">API endpoints</a>, because publishing them is what the
+						service does.
+					</p>
+				</section>
 
-                <h2>Security</h2>
-                <p>We implement appropriate security measures to protect your data, including secure session management and database access controls.</p>
+				<section class="prose" id="retention">
+					<h2>Data retention</h2>
+					<p>
+						Your data is stored until you delete it with the "Delete Timezone" button
+						or by contacting us. Session data expires automatically after 1 hour.
+					</p>
+				</section>
 
-                <h2>Changes to This Policy</h2>
-                <p>We may update this privacy policy from time to time. Any changes will be posted on this page with an updated date.</p>
+				<section class="prose" id="your-rights">
+					<h2>Your rights</h2>
+					<p>You can:</p>
+					<ul>
+						<li>Update your timezone at any time</li>
+						<li>Delete your timezone data using the delete button</li>
+						<li>Log out to end your session immediately</li>
+					</ul>
+				</section>
 
-                <h2>Contact</h2>
-                <p>If you have questions about this privacy policy or your data, please contact us through our <a href="https://heliopolis.live/creations/timezoneDB" target="_blank" rel="noopener noreferrer">project page</a>.</p>
-            </section>
-        </main>
+				<section class="prose" id="third-parties">
+					<h2>Third-party services</h2>
+					<p>
+						We use Discord OAuth for authentication. See
+						<a
+							href="https://discord.com/privacy"
+							target="_blank"
+							rel="noopener noreferrer"
+							>Discord's Privacy Policy</a
+						>
+						for how Discord handles your data.
+					</p>
+				</section>
 
-        <footer class="site-footer">
-            <a href="/">Home</a>
-            <a href="/docs">API Docs</a>
-            <a href="https://heliopolis.live/creations/timezoneDB" target="_blank" rel="noopener noreferrer">
-                <img class="forgejo-mark" src="/public/forgejo_logo.svg" alt="" />
-                Source
-            </a>
-        </footer>
-    </body>
+				<section class="prose" id="security">
+					<h2>Security</h2>
+					<p>
+						We protect your data with secure session management and database access
+						controls.
+					</p>
+				</section>
+
+				<section class="prose" id="changes">
+					<h2>Changes to this policy</h2>
+					<p>
+						We may update this policy from time to time. Any changes will be posted
+						on this page with an updated date.
+					</p>
+				</section>
+
+				<section class="prose" id="contact">
+					<h2>Contact</h2>
+					<p>
+						If you have questions about this policy or your data, contact us through
+						our
+						<a
+							href="https://heliopolis.live/creations/timezoneDB"
+							target="_blank"
+							rel="noopener noreferrer"
+							>project page</a
+						>.
+					</p>
+				</section>
+			</main>
+		</div>
+
+		<footer class="site-footer">
+			<a href="/">Home</a>
+			<a href="/docs">API Docs</a>
+			<a
+				href="https://heliopolis.live/creations/timezoneDB"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				<img class="forgejo-mark" src="/public/forgejo_logo.svg" alt="" />
+				Source
+			</a>
+		</footer>
+	</body>
 </html>
