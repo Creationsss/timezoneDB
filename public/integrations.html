@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Timezone DB</title>
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/article.css" />
+	</head>
+
+	<body class="article-page">
+		<header class="topbar">
+			<div class="topbar-inner">
+				<a class="brand" href="/">Timezone DB</a>
+				<a class="topbar-link" href="/">Return home</a>
+			</div>
+		</header>
+
+		<div class="shell">
+			<nav class="sidebar">
+				<span class="nav-title">On this page</span>
+				<a href="#equicord-timezones">Timezones for Equicord</a>
+				<a href="#build-your-own">Build your own</a>
+				<a href="#get-listed">Get listed</a>
+			</nav>
+
+			<main class="content">
+				<h1>Integrations</h1>
+				<p class="lede">
+					Plugins and tools that read timezones from Timezone DB. Set your timezone once
+					here and each of them can use it.
+				</p>
+
+				<section class="prose" id="equicord-timezones">
+					<h2>Timezones for Equicord</h2>
+					<p>
+						A plugin for the Equicord Discord client that shows each user's local time on
+						their profile and in message headers.
+					</p>
+					<p>
+						<a
+							href="https://github.com/Equicord/Equicord/tree/main/src/equicordplugins/timezones"
+							target="_blank"
+							rel="noopener noreferrer"
+							>View the plugin source</a
+						>
+					</p>
+				</section>
+
+				<section class="prose" id="build-your-own">
+					<h2>Build your own</h2>
+					<p>
+						Anything that can make an HTTP request can read a timezone, and reads don't
+						need a login. Look up one user by Discord ID, or fetch everyone at once
+						with <code>GET /v1/list</code>.
+					</p>
+					<div class="sample">
+						<div class="sample-head">Request</div>
+						<pre><code>GET /v1/get?id=123456789</code></pre>
+					</div>
+					<p>
+						The <a href="/docs">API reference</a> covers every endpoint, the response
+						shapes and the CORS rules.
+					</p>
+				</section>
+
+				<section class="prose" id="get-listed">
+					<h2>Get listed</h2>
+					<p>
+						If you've built something that reads from Timezone DB, open an issue on
+						the
+						<a
+							href="https://heliopolis.live/creations/timezoneDB/issues"
+							target="_blank"
+							rel="noopener noreferrer"
+							>project page</a
+						>
+						to have it added here.
+					</p>
+				</section>
+			</main>
+		</div>
+
+		<footer class="site-footer">
+			<a href="/">Home</a>
+			<a href="/docs">API Docs</a>
+			<a href="/privacy">Privacy</a>
+			<a
+				href="https://heliopolis.live/creations/timezoneDB"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				<img class="forgejo-mark" src="/public/forgejo_logo.svg" alt="" />
+				Source
+			</a>
+		</footer>
+	</body>
+</html>

@@ -2,54 +2,12 @@
 	--method-get: var(--accent);
 	--method-post: #3fb950;
 	--method-delete: #f0603a;
-	--topbar-height: 3.5rem;
-	--muted: #a0a0a0;
-	--mono: 'Courier New', monospace;
 	--measure: 46rem;
 }
 
 body.article-page {
-	display: block;
-	padding: 0;
 	font-size: 0.95rem;
 	line-height: 1.65;
-}
-
-.topbar {
-	position: sticky;
-	top: 0;
-	z-index: 50;
-	height: var(--topbar-height);
-	border-bottom: 1px solid var(--border);
-	background: var(--bg);
-}
-
-.topbar-inner {
-	max-width: 1280px;
-	height: 100%;
-	margin: 0 auto;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-	padding: 0 1.5rem;
-}
-
-.brand {
-	color: var(--fg);
-	font-weight: 600;
-	text-decoration: none;
-	letter-spacing: -0.01em;
-}
-
-.topbar-link {
-	color: var(--muted);
-	font-size: 0.85rem;
-	text-decoration: none;
-}
-
-.topbar-link:hover {
-	color: var(--accent);
 }
 
 .shell {
@@ -114,23 +72,10 @@ body.article-page {
 	background: #4ea3ff14;
 }
 
-.content {
-	max-width: none;
-	background: none;
-	border: none;
-	box-shadow: none;
-	padding: 0;
-}
-
-.content :is(h1, h2) {
-	text-align: left;
-}
-
 .content h1 {
 	font-size: 2.25rem;
 	font-weight: 600;
 	letter-spacing: -0.02em;
-	color: var(--fg);
 	margin: 0 0 0.5rem;
 }
 
@@ -238,15 +183,6 @@ body.article-page {
 	margin-bottom: 0;
 }
 
-.content a {
-	color: var(--accent);
-	text-decoration: none;
-}
-
-.content a:hover {
-	text-decoration: underline;
-}
-
 .endpoint {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -347,15 +283,6 @@ body.article-page {
 	margin-top: 1rem;
 }
 
-.content code {
-	font-family: var(--mono);
-	font-size: 0.875em;
-	color: var(--accent);
-	background: #4ea3ff14;
-	padding: 0.1rem 0.3rem;
-	border-radius: 0.25rem;
-}
-
 .sample {
 	background: var(--card);
 	border: 1px solid var(--border);
@@ -391,7 +318,7 @@ body.article-page {
 }
 
 .article-page .site-footer {
-	padding: 0.5rem 1rem 3rem;
+	padding: 2rem 1rem 3rem;
 }
 
 @media (max-width: 1100px) {
@@ -403,10 +330,6 @@ body.article-page {
 }
 
 @media (max-width: 860px) {
-	.topbar-inner {
-		padding: 0 1rem;
-	}
-
 	.shell {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 2rem;

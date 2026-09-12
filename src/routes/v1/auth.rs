@@ -15,6 +15,13 @@ use std::collections::HashMap;
 use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
 
+pub fn session_id(headers: &HeaderMap) -> Option<String> {
+    headers
+        .typed_get::<Cookie>()?
+        .get(constants::SESSION_COOKIE_NAME)
+        .map(str::to_owned)
+}
+
 pub async fn validate_session(
     headers: &HeaderMap,
     state: &AppState,
@@ -398,17 +405,7 @@ pub async fn me(State(state): State<AppState>, headers: HeaderMap) -> impl IntoR
 
 #[instrument(skip(state))]
 pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
-    let Some(cookie_header) = headers.typed_get::<Cookie>() else {
-        return (
-            StatusCode::OK,
-            Json(JsonMessage {
-                message: "Already logged out".into(),
-            }),
-        )
-            .into_response();
-    };
-
-    let Some(session_id) = cookie_header.get(constants::SESSION_COOKIE_NAME) else {
+    let Some(session_id) = session_id(&headers) else {
         return (
             StatusCode::OK,
             Json(JsonMessage {

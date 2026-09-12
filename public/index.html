@@ -1,116 +1,258 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Timezone DB</title>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Timezone DB</title>
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/index.css" />
+		<script src="/public/js/index.js" defer></script>
+	</head>
 
-        <link
-            href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css"
-            rel="stylesheet"
-        />
-        <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+	<body class="landing-page">
 
-        <link rel="stylesheet" href="/public/css/style.css" />
-        <script src="/public/js/index.js" defer></script>
-    </head>
+		<header class="topbar">
+			<div class="topbar-inner">
+				<a class="brand" href="/">Timezone DB</a>
+				<nav class="topbar-nav">
+					<a class="topbar-link" href="/integrations">Integrations</a>
+					<a class="topbar-link" href="/docs">API Docs</a>
+					<a
+						class="button button-primary button-small signed-out-only"
+						href="/v1/auth/discord?redirect=/"
+						>Log in with Discord</a
+					>
+					<button
+						class="plain-button topbar-link signed-in-only"
+						id="logout"
+						type="button"
+						data-skeleton
+					>
+						Log out
+					</button>
+				</nav>
+			</div>
+		</header>
 
-    <body>
-        <main>
-            <section id="login-section" class="hidden">
-                <h1>Timezone DB</h1>
-                <p style="text-align: center; margin-bottom: 1.5rem; opacity: 0.8;">
-                    Track and share your timezone with friends
-                </p>
-                <a href="/v1/auth/discord?redirect=/" id="login-btn">
-                    Log in with Discord
-                </a>
+		<main class="landing">
+			<section class="hero">
+				<div>
+					<h1>Show your local time on Discord</h1>
+					<p class="hero-lede">
+						Set your timezone once. Supported Discord plugins show your local time on
+						your profile and next to your messages.
+					</p>
+					<div class="hero-actions">
+						<a
+							class="button button-primary signed-out-only"
+							href="/v1/auth/discord?redirect=/"
+							>Log in with Discord</a
+						>
+						<a class="button button-ghost" href="/integrations">See integrations</a>
+					</div>
+					<p class="hero-note">
+						Your username and timezone are public, and you can delete them at any time.
+						<a class="text-link" href="/privacy">Privacy policy</a>
+					</p>
+				</div>
 
-                <div id="stats-section" class="hidden">
-                    <h3>Community Stats</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-total-users">-</div>
-                            <div class="stat-label">Total Users</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-unique-timezones">-</div>
-                            <div class="stat-label">Unique Timezones</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-recent-users">-</div>
-                            <div class="stat-label">New This Week</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-top-timezone">-</div>
-                            <div class="stat-label">Most Popular</div>
-                        </div>
-                    </div>
-                </div>
+				<div class="card signed-in-only">
+					<div class="account-head">
+						<img
+							class="avatar hidden"
+							id="avatar"
+							width="48"
+							height="48"
+							alt=""
+							data-skeleton
+						/>
+						<div>
+							<div class="account-name" id="account-name" data-skeleton="text"></div>
+							<div class="account-sub" id="account-sub" data-skeleton="text">
+								No timezone set yet
+							</div>
+						</div>
+					</div>
 
-                <div class="about-section">
-                    <h3>What is Timezone DB?</h3>
-                    <p>A simple service to store and retrieve user timezones. Perfect for Discord communities and remote teams.</p>
+					<div class="clock hidden" id="clock">
+						<div class="big-time" id="clock-time" data-skeleton="text">--:--</div>
+						<div class="time-meta" id="clock-meta" data-skeleton="text"></div>
+						<button
+							class="plain-button link-button"
+							id="format-toggle"
+							type="button"
+							data-skeleton="text"
+						></button>
+					</div>
 
-                    <ul class="feature-list">
-                        <li>Store your timezone with Discord OAuth</li>
-                        <li>API endpoints for integrations</li>
-                    </ul>
-                </div>
-            </section>
+					<label class="field-label" for="timezone-select" data-skeleton="text">
+						Your timezone
+					</label>
+					<select id="timezone-select" data-skeleton>
+						<option value="">Search timezones</option>
+					</select>
+					<button
+						class="plain-button link-button"
+						id="use-browser"
+						type="button"
+						data-skeleton="text"
+					>
+						Use this browser's timezone (<span id="browser-zone"></span>)
+					</button>
 
-            <section id="timezone-section" class="hidden">
-                <div class="profile">
-                    <img
-                        id="avatar"
-                        class="hidden"
-                        width="80"
-                        height="80"
-                        alt="Avatar"
-                    />
-                    <h2 id="auth-status">Logged in</h2>
-                </div>
+					<div class="account-actions">
+						<button
+							class="button button-primary"
+							id="save-timezone"
+							type="button"
+							data-skeleton
+						>
+							Save timezone
+						</button>
+						<button
+							class="button button-danger hidden"
+							id="delete-timezone"
+							type="button"
+							data-skeleton
+						>
+							Delete
+						</button>
+					</div>
+					<p class="status" id="status-msg" role="status"></p>
+				</div>
 
-                <div class="timezone-info hidden" id="timezone-info">
-                    <h4>Timezone Information</h4>
-                    <div class="offset" id="timezone-offset">UTC+0</div>
-                    <div class="description" id="timezone-description">Your current timezone</div>
-                </div>
+				<div class="card" id="lookup-card">
+					<h2>Look up a user</h2>
+					<p class="card-sub">See the local time for anyone who has set a timezone.</p>
+					<form class="lookup-form" id="lookup-form">
+						<input
+							class="input"
+							id="lookup-id"
+							inputmode="numeric"
+							autocomplete="off"
+							placeholder="Discord user ID"
+							aria-label="Discord user ID"
+						/>
+						<button class="button button-primary" type="submit">Look up</button>
+					</form>
+					<p class="hint">
+						In Discord, turn on Developer Mode, then right-click a user and choose Copy
+						User ID.
+					</p>
+					<p class="error-text" id="lookup-error" role="status"></p>
+					<div class="lookup-result hidden" id="lookup-result">
+						<div class="lookup-name" id="lookup-name"></div>
+						<div class="big-time" id="lookup-time">--:--</div>
+						<div class="time-meta" id="lookup-meta"></div>
+					</div>
+				</div>
+			</section>
 
-                <div class="info-cards hidden" id="info-cards">
-                    <div class="info-card">
-                        <h4>UTC Offset</h4>
-                        <div class="value" id="utc-offset">--</div>
-                    </div>
-                    <div class="info-card">
-                        <h4>Time Format</h4>
-                        <div class="value" id="time-format">12h</div>
-                    </div>
-                </div>
+			<section class="section">
+				<div class="section-head">
+					<p class="eyebrow">How it works</p>
+					<h2>Set it once</h2>
+					<p class="section-lede">Your timezone stays until you change or delete it.</p>
+				</div>
+				<ol class="steps">
+					<li class="card">
+						<h3>Log in with Discord</h3>
+						<p>
+							We only request the identify scope, so we see your public profile and
+							not your servers or messages.
+						</p>
+					</li>
+					<li class="card">
+						<h3>Pick your timezone</h3>
+						<p>
+							Search every IANA timezone, including older names like
+							America/Montreal, or use the one your browser reports.
+						</p>
+					</li>
+					<li class="card">
+						<h3>Your time shows up</h3>
+						<p>
+							Anyone using a supported plugin sees your local time. The
+							<a class="text-link" href="/integrations">integrations page</a> lists
+							them.
+						</p>
+					</li>
+				</ol>
+			</section>
 
-                <label for="timezone-select">Select your timezone:</label>
-                <select id="timezone-select">
-                    <option value="">Select timezone</option>
-                </select>
-                <button id="set-timezone">Save Timezone</button>
-                <button id="delete-timezone" class="danger hidden">
-                    Delete Timezone
-                </button>
-                <button id="logout" class="danger hidden">
-                    Logout
-                </button>
+			<section class="section">
+				<div class="section-head">
+					<p class="eyebrow">Integrations</p>
+					<h2>Where your time shows up</h2>
+					<p class="section-lede">
+						Your timezone is public, so any client or bot can read it.
+					</p>
+				</div>
+				<div class="integrations">
+					<article class="card integration">
+						<span class="tag">Plugins</span>
+						<h3>Supported plugins</h3>
+						<p>Discord plugins that read your timezone from here.</p>
+						<a class="text-link" href="/integrations">Browse integrations</a>
+					</article>
+					<article class="card integration">
+						<span class="tag">HTTP API</span>
+						<h3>Build your own</h3>
+						<p>
+							Read one user's timezone with <code>GET /v1/get?id=</code>, or everyone's
+							with <code>GET /v1/list</code>. Reads don't need a login.
+						</p>
+						<a class="text-link" href="/docs">Read the API docs</a>
+					</article>
+				</div>
+			</section>
 
-                <p id="status-msg"></p>
-            </section>
-        </main>
+			<section class="section" id="stats-section">
+				<div class="section-head">
+					<p class="eyebrow">Community</p>
+					<h2>Who's sharing</h2>
+				</div>
+				<div class="stats">
+					<div class="card stat">
+						<div class="stat-value" id="stat-users">
+							<span class="skeleton skeleton-stat"></span>
+						</div>
+						<div class="stat-label">People sharing</div>
+					</div>
+					<div class="card stat">
+						<div class="stat-value" id="stat-zones">
+							<span class="skeleton skeleton-stat"></span>
+						</div>
+						<div class="stat-label">Timezones in use</div>
+					</div>
+					<div class="card stat">
+						<div class="stat-value" id="stat-week">
+							<span class="skeleton skeleton-stat"></span>
+						</div>
+						<div class="stat-label">Joined this week</div>
+					</div>
+					<div class="card stat">
+						<div class="stat-value stat-value-text" id="stat-top">
+							<span class="skeleton skeleton-stat skeleton-w70"></span>
+						</div>
+						<div class="stat-label">Most common</div>
+					</div>
+				</div>
+			</section>
+		</main>
 
-        <footer class="site-footer">
-            <a href="/docs">API Docs</a>
-            <a href="/privacy">Privacy</a>
-            <a href="https://heliopolis.live/creations/timezoneDB" target="_blank" rel="noopener noreferrer">
-                <img class="forgejo-mark" src="/public/forgejo_logo.svg" alt="" />
-                Source
-            </a>
-        </footer>
-    </body>
+		<footer class="site-footer">
+			<a href="/integrations">Integrations</a>
+			<a href="/docs">API Docs</a>
+			<a href="/privacy">Privacy</a>
+			<a
+				href="https://heliopolis.live/creations/timezoneDB"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				<img class="forgejo-mark" src="/public/forgejo_logo.svg" alt="" />
+				Source
+			</a>
+		</footer>
+	</body>
 </html>
