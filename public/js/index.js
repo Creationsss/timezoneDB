@@ -276,12 +276,6 @@ async function fetchUserInfo() {
 	} catch {
 		loginSection.classList.remove("hidden");
 		timezoneSection.classList.add("hidden");
-
-		try {
-			await fetchStats();
-		} catch (error) {
-			console.error(error);
-		}
 	}
 }
 
@@ -329,4 +323,5 @@ setBtn.addEventListener("click", async () => {
 
 loadTimeFormatPreference();
 
+fetchStats();
 fetchUserInfo();

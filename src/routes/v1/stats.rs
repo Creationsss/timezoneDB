@@ -61,10 +61,9 @@ pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
         }
     };
 
-    let recent_registrations_result = sqlx::query(&format!(
-        "SELECT COUNT(*) as count FROM timezones WHERE created_at > NOW() - INTERVAL '{} days'",
-        constants::RECENT_REGISTRATIONS_DAYS
-    ))
+    let recent_registrations_result = sqlx::query(
+        "SELECT COUNT(*) as count FROM timezones WHERE created_at >= date_trunc('week', NOW())",
+    )
     .fetch_one(&state.db)
     .await;
 
@@ -72,7 +71,13 @@ pub async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
         Ok(row) => row.get::<i64, _>("count"),
         Err(e) => {
             error!("Failed to get recent registrations: {}", e);
-            0
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(JsonMessage {
+                    message: "Failed to fetch recent registrations".into(),
+                }),
+            )
+                .into_response();
         }
     };
 

@@ -35,4 +35,3 @@ pub const FAVICON_PATH: &str = "public/favicon.ico";
 pub const NOT_FOUND_PAGE: &str = "public/404.html";
 
 pub const TOP_TIMEZONES_LIMIT: usize = 10;
-pub const RECENT_REGISTRATIONS_DAYS: i32 = 7;
