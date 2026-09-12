@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+
+env:
+  CARGO_HOME: ${{ github.workspace }}/.cargo
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    runs-on: docker
+    container:
+      image: rust:1.95
+    steps:
+      - run: apt-get update -qq && apt-get install -y -qq nodejs git
+      - uses: actions/checkout@v4
+      - run: rustup component add rustfmt
+      - run: cargo fmt --check --verbose
+
+  clippy:
+    runs-on: docker
+    container:
+      image: rust:1.95
+    steps:
+      - run: apt-get update -qq && apt-get install -y -qq nodejs git
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .cargo
+            target
+          key: clippy-${{ hashFiles('Cargo.lock') }}
+          restore-keys: clippy-
+      - run: rustup component add clippy
+      - run: cargo clippy --all-targets -- -D warnings
+
+  docker-build:
+    needs: [fmt, clippy]
+    if: github.ref == 'refs/heads/main'
+    runs-on: privileged
+    container:
+      image: docker:cli
+    steps:
+      - run: apk add --no-cache nodejs git
+      - uses: actions/checkout@v4
+      - name: Login
+        env:
+          REGISTRY: ${{ vars.DOCKER_REGISTRY }}
+          USERNAME: ${{ secrets.DOCKER_REGISTRY_USER }}
+          TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+        run: |
+          echo "$TOKEN" | docker login -u "$USERNAME" --password-stdin "$REGISTRY"
+      - name: Build and push
+        env:
+          IMAGE: ${{ vars.DOCKER_IMAGE_NAME }}
+        run: |
+          SHA="$(git rev-parse --short HEAD)"
+          docker build -t "$IMAGE:$SHA" -t "$IMAGE:latest" .
+          docker push "$IMAGE:$SHA"
+          docker push "$IMAGE:latest"

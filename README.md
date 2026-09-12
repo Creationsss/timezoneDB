@@ -64,72 +64,7 @@ cargo run
 
 ## API Endpoints
 
-### `GET /get?id=<discord_user_id>`
-
-Returns stored timezone and username for the given user ID.
-
-**Response:**
-```json
-{
-  "user": {
-    "id": "123456789",
-    "username": "username"
-  },
-  "timezone": "America/New_York"
-}
-```
-
-### `POST /set`
-
-Stores timezone for the authenticated user. Requires Discord OAuth session.  
-**Body:** `application/x-www-form-urlencoded` with `timezone=<iana_timezone>`
-
-### `DELETE /delete`
-
-Deletes the authenticated user's timezone entry. Requires Discord OAuth session.
-
-### `GET /list`
-
-Returns a JSON object of all stored timezones by user ID.
-
-**Response:**
-```json
-{
-  "123456789": {
-    "username": "user1",
-    "timezone": "America/New_York"
-  },
-  "987654321": {
-    "username": "user2", 
-    "timezone": "Europe/London"
-  }
-}
-```
-
-### `GET /timezones`
-
-Returns every IANA timezone name accepted by `/set`, sorted alphabetically, including backward-compatibility links such as `America/Montreal`.
-
-**Response:**
-```json
-[
-  "Africa/Abidjan",
-  "Africa/Accra",
-  "America/Montreal"
-]
-```
-
-### `GET /me`
-
-Returns Discord profile info and timezone for the current session.
-
-### `GET /auth/discord`
-
-Starts OAuth2 authentication flow. Supports optional `?redirect=` parameter.
-
-### `GET /auth/discord/callback`
-
-Handles OAuth2 redirect and sets a session cookie.
+Every endpoint is documented at `/docs` on the running service.
 
 ## Configuration
 

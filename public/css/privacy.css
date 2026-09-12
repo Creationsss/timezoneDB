@@ -1,34 +1,9 @@
 body {
-	align-items: flex-start;
-	padding-top: 2rem;
+	justify-content: flex-start;
 }
 
 main {
 	max-width: 800px;
-	margin: 0 auto;
-}
-
-header {
-	position: fixed;
-	top: 1rem;
-	left: 1rem;
-	z-index: 100;
-}
-
-header a {
-	color: var(--accent);
-	text-decoration: none;
-	font-size: 0.9rem;
-	padding: 0.5rem 1rem;
-	background: var(--card);
-	border: 1px solid var(--border);
-	border-radius: 0.5rem;
-	transition: all 0.2s ease;
-}
-
-header a:hover {
-	background: var(--accent);
-	color: white;
 }
 
 .privacy-policy {

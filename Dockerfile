@@ -16,8 +16,6 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release && rm -rf src
 
 COPY src ./src
-COPY public ./public
-COPY migrations ./migrations
 
 RUN touch src/main.rs && cargo build --release
 
@@ -35,8 +33,8 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
 COPY --from=builder /app/target/release/timezone-db /usr/local/bin/timezone-db
-COPY --from=builder --chown=appuser:appuser /app/public ./public
-COPY --from=builder --chown=appuser:appuser /app/migrations ./migrations
+COPY --chown=appuser:appuser public ./public
+COPY --chown=appuser:appuser migrations ./migrations
 
 RUN chown -R appuser:appuser /app
 

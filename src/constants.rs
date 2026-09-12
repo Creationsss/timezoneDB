@@ -31,7 +31,9 @@ pub const DEFAULT_REDIS_CONNECT_TIMEOUT: &str = "10";
 pub const PUBLIC_DIR: &str = "public";
 pub const INDEX_PAGE: &str = "public/index.html";
 pub const PRIVACY_PAGE: &str = "public/privacy.html";
+pub const DOCS_PAGE: &str = "public/docs.html";
 pub const FAVICON_PATH: &str = "public/favicon.ico";
 pub const NOT_FOUND_PAGE: &str = "public/404.html";
+pub const PAGE_LOAD_ERROR_BODY: &str = "<h1>Page unavailable</h1>";
 
 pub const TOP_TIMEZONES_LIMIT: usize = 10;

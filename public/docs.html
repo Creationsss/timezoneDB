@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>API Docs - Timezone DB</title>
+		<meta
+			name="description"
+			content="Complete HTTP API reference for Timezone DB."
+		/>
+		<link rel="stylesheet" href="/public/css/style.css" />
+		<link rel="stylesheet" href="/public/css/docs.css" />
+	</head>
+
+	<body class="docs-page">
+		<header class="topbar">
+			<div class="topbar-inner">
+				<a class="brand" href="/">Timezone DB</a>
+				<a class="topbar-link" href="/">Return home</a>
+			</div>
+		</header>
+
+		<div class="shell">
+			<nav class="sidebar">
+				<span class="nav-title">Overview</span>
+				<a href="#base-url">Base URL</a>
+				<a href="#authentication">Authentication</a>
+				<a href="#errors">Errors</a>
+				<a href="#cors">CORS</a>
+
+				<span class="nav-title">Timezones</span>
+				<a href="#get"><span class="method">GET</span>/get</a>
+				<a href="#list"><span class="method">GET</span>/list</a>
+				<a href="#timezones"
+					><span class="method">GET</span>/timezones</a
+				>
+				<a href="#set"><span class="method post">POST</span>/set</a>
+				<a href="#delete"
+					><span class="method delete">DELETE</span>/delete</a
+				>
+				<a href="#stats"><span class="method">GET</span>/stats</a>
+
+				<span class="nav-title">Authentication</span>
+				<a href="#auth-discord"
+					><span class="method">GET</span>/auth/discord</a
+				>
+				<a href="#auth-callback"
+					><span class="method">GET</span>/callback</a
+				>
+				<a href="#me"><span class="method">GET</span>/me</a>
+				<a href="#logout"><span class="method">GET</span>/logout</a>
+
+				<span class="nav-title">Service</span>
+				<a href="#health"><span class="method">GET</span>/health</a>
+			</nav>
+
+			<main class="content">
+				<h1>API Reference</h1>
+				<p class="lede">
+					Store and share Discord user timezones over a small JSON
+					HTTP API.
+				</p>
+
+				<section class="prose" id="base-url">
+					<h2>Base URL</h2>
+					<p>
+						All endpoints live under <code>/v1</code>. The same
+						routes are also served unprefixed (<code>/get</code>,
+						<code>/set</code>, and so on) for backwards
+						compatibility. Prefer the versioned paths in new code.
+					</p>
+				</section>
+
+				<section class="prose" id="authentication">
+					<h2>Authentication</h2>
+					<p>
+						<code>/me</code>, <code>/set</code> and
+						<code>/delete</code> require a Discord OAuth session.
+						Every other endpoint is public.
+					</p>
+					<p>
+						Send users through
+						<a href="#auth-discord"
+							><code>GET /v1/auth/discord</code></a
+						>; the callback sets a <code>session</code> cookie that
+						is valid for one hour and stored in Redis. Browser
+						clients must send requests with credentials included so
+						the cookie travels with them.
+					</p>
+				</section>
+
+				<section class="prose" id="errors">
+					<h2>Errors</h2>
+					<p>
+						Handler errors respond with a JSON object carrying a
+						single
+						<code>message</code> field. Malformed requests are
+						rejected before the handler runs and return plain text
+						instead: a missing or unparsable query string gives
+						<code>400</code>, a missing or unparsable form body
+						gives <code>422</code>, and a wrong
+						<code>Content-Type</code> on <code>/set</code> gives
+						<code>415</code>. Unknown paths return the HTML 404
+						page, an unsupported method on a known path returns an
+						empty <code>405</code>, and
+						<a href="#health"><code>/health</code></a> returns its
+						normal body on <code>503</code>.
+					</p>
+					<div class="sample">
+						<div class="sample-head">Error</div>
+						<pre><code>{
+  "message": "Invalid timezone"
+}</code></pre>
+					</div>
+					<p>
+						Session failures return <code>401</code> with one of
+						<code>Missing session cookie</code>,
+						<code>Missing session ID</code>,
+						<code>Session not found</code>, or
+						<code>Invalid user session</code>. If Redis is
+						unreachable the same endpoints return
+						<code>500</code> with
+						<code>Database connection error</code>.
+					</p>
+				</section>
+
+				<section class="prose" id="cors">
+					<h2>CORS</h2>
+					<p>
+						<code>/set</code> and <code>/delete</code> answer
+						<code>OPTIONS</code>
+						preflights. Preflight responses advertise
+						<code>GET, POST, DELETE, OPTIONS</code> and
+						<code>Content-Type, Authorization</code>, and echo any
+						<code>Origin</code> with credentials enabled.
+					</p>
+					<p>
+						Actual responses are stricter. Read-only requests
+						(<code>GET</code>,
+						<code>HEAD</code>, <code>OPTIONS</code>) have their
+						<code>Origin</code>
+						echoed back from any origin, writes only from Discord
+						domains, and
+						<code>access-control-allow-credentials</code> is sent
+						only for those domains. A browser write from any other
+						origin therefore passes preflight and is then blocked on
+						the response.
+					</p>
+				</section>
+
+				<h2 class="group">Timezones</h2>
+
+				<section class="endpoint" id="get">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span><code>/v1/get</code>
+						</h3>
+						<p>
+							Returns stored timezone and username for the given
+							user ID.
+						</p>
+
+						<h4>Query parameters</h4>
+						<dl class="params">
+							<dt>
+								<code>id</code>
+								<span class="required">required</span>
+							</dt>
+							<dd>Discord user ID.</dd>
+						</dl>
+
+						<p class="note">
+							Responds <code>404</code> with
+							<code>User not found</code> when the user has no
+							stored timezone.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "user": {
+    "id": "123456789",
+    "username": "username"
+  },
+  "timezone": "America/New_York"
+}</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="list">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span><code>/v1/list</code>
+						</h3>
+						<p>
+							Returns a JSON object of all stored timezones, keyed
+							by user ID.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "123456789": {
+    "username": "user1",
+    "timezone": "America/New_York"
+  },
+  "987654321": {
+    "username": "user2",
+    "timezone": "Europe/London"
+  }
+}</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="timezones">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span
+							><code>/v1/timezones</code>
+						</h3>
+						<p>
+							Returns every IANA timezone name accepted by
+							<code>/set</code>, sorted alphabetically, including
+							backward-compatibility links such as
+							<code>America/Montreal</code>.
+						</p>
+						<p class="note">
+							Cached for 24 hours via
+							<code>Cache-Control: public, max-age=86400</code>.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>[
+  "Africa/Abidjan",
+  "Africa/Accra",
+  "America/Montreal"
+]</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="set">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method post">POST</span
+							><code>/v1/set</code>
+							<span class="auth">session</span>
+						</h3>
+						<p>Stores the timezone for the authenticated user.</p>
+
+						<h4>Body</h4>
+						<dl class="params">
+							<dt>
+								<code>timezone</code>
+								<span class="required">required</span>
+							</dt>
+							<dd>
+								An IANA name from
+								<a href="#timezones"
+									><code>/v1/timezones</code></a
+								>, sent as
+								<code>application/x-www-form-urlencoded</code>.
+							</dd>
+						</dl>
+
+						<p class="note">
+							Responds <code>400</code> with
+							<code>Timezone is required</code> when the value is
+							blank, or <code>Invalid timezone</code> when it is
+							not a known name.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "message": "Timezone saved"
+}</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="delete">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method delete">DELETE</span
+							><code>/v1/delete</code>
+							<span class="auth">session</span>
+						</h3>
+						<p>Deletes the authenticated user's timezone entry.</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "message": "Timezone deleted"
+}</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="stats">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span
+							><code>/v1/stats</code>
+						</h3>
+						<p>Returns aggregate usage statistics.</p>
+						<p class="note">
+							<code>recent_registrations</code> counts users who
+							registered since the start of the current calendar
+							week (Monday), and <code>top_timezones</code> is
+							capped at ten entries.
+							<code>total_timezones</code> is an alias of
+							<code>total_users</code>
+							and always equals it; the distinct count is
+							<code>unique_timezones</code>.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "total_users": 42,
+  "total_timezones": 42,
+  "timezone_distribution": {
+    "America/New_York": 12,
+    "Europe/London": 8
+  },
+  "top_timezones": [
+    {
+      "timezone": "America/New_York",
+      "count": 12
+    }
+  ],
+  "unique_timezones": 15,
+  "top_timezone": "America/New_York",
+  "recent_registrations": 3
+}</code></pre>
+					</div>
+				</section>
+
+				<h2 class="group">Authentication</h2>
+
+				<section class="endpoint" id="auth-discord">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span
+							><code>/v1/auth/discord</code>
+						</h3>
+						<p>
+							Starts the OAuth2 flow and responds
+							<code>302</code> to Discord's authorize page.
+						</p>
+
+						<h4>Query parameters</h4>
+						<dl class="params">
+							<dt>
+								<code>redirect</code>
+								<span class="optional">optional</span>
+							</dt>
+							<dd>
+								Where to send the user after login. Carried
+								through OAuth
+								<code>state</code> and must be a relative path.
+								Absolute URLs are rejected on the way back.
+							</dd>
+						</dl>
+					</div>
+					<div class="sample">
+						<div class="sample-head">302 Found</div>
+						<pre><code>Location: https://discord.com/oauth2/authorize
+  ?client_id=...
+  &redirect_uri=...
+  &response_type=code
+  &scope=identify</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="auth-callback">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span>
+							<code>/v1/auth/discord/callback</code>
+						</h3>
+						<p>
+							Handles the OAuth2 redirect and sets the session
+							cookie. Responds
+							<code>302</code> to the original
+							<code>redirect</code> target, or
+							<code>200</code> with a JSON body carrying
+							<code>message</code>, <code>user</code> and
+							<code>session_id</code> when none was supplied.
+							Authenticate with the cookie;
+							<code>session_id</code> is not accepted anywhere
+							else.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">Set-Cookie</div>
+						<pre><code>session=...; Max-Age=3600; Path=/;
+  SameSite=None; Secure; HttpOnly</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="me">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span><code>/v1/me</code>
+							<span class="auth">session</span>
+						</h3>
+						<p>
+							Returns Discord profile info and timezone for the
+							current session.
+							<code>timezone</code> is <code>null</code> when the
+							user has not stored one.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "user": {
+    "id": "123456789",
+    "username": "username",
+    "discriminator": "0",
+    "avatar": "a1b2c3"
+  },
+  "timezone": "America/New_York"
+}</code></pre>
+					</div>
+				</section>
+
+				<section class="endpoint" id="logout">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span
+							><code>/v1/logout</code>
+						</h3>
+						<p>
+							Clears the session cookie and deletes the session
+							from Redis.
+						</p>
+						<p class="note">
+							Responds <code>Already logged out</code> when no
+							session cookie was sent.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "message": "Logged out successfully"
+}</code></pre>
+					</div>
+				</section>
+
+				<h2 class="group">Service</h2>
+
+				<section class="endpoint" id="health">
+					<div class="endpoint-doc">
+						<h3>
+							<span class="method">GET</span
+							><code>/v1/health</code>
+						</h3>
+						<p>
+							Reports service and dependency health. Responds
+							<code>503</code> when either dependency is down.
+						</p>
+					</div>
+					<div class="sample">
+						<div class="sample-head">200 OK</div>
+						<pre><code>{
+  "status": "healthy",
+  "database": true,
+  "redis": true,
+  "timestamp": "2026-09-12T17:19:06.117916Z"
+}</code></pre>
+					</div>
+				</section>
+			</main>
+		</div>
+
+		<footer class="site-footer">
+			<a href="/">Home</a>
+			<a href="/privacy">Privacy</a>
+			<a
+				href="https://heliopolis.live/creations/timezoneDB"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				<img
+					class="forgejo-mark"
+					src="/public/forgejo_logo.svg"
+					alt=""
+				/>
+				Source
+			</a>
+		</footer>
+	</body>
+</html>
