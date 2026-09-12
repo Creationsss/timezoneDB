@@ -7,6 +7,7 @@ A simple Rust-powered API service for managing and retrieving user timezones.
 - Store user timezones via `/set` endpoint (requires Discord OAuth)
 - Retrieve timezones by user ID via `/get`
 - List all saved timezones
+- List every valid IANA timezone via `/timezones`
 - Cookie-based session handling using Redis connection pooling
 - Built-in CORS support
 - Structured configuration with validation
@@ -103,6 +104,19 @@ Returns a JSON object of all stored timezones by user ID.
     "timezone": "Europe/London"
   }
 }
+```
+
+### `GET /timezones`
+
+Returns every IANA timezone name accepted by `/set`, sorted alphabetically, including backward-compatibility links such as `America/Montreal`.
+
+**Response:**
+```json
+[
+  "Africa/Abidjan",
+  "Africa/Accra",
+  "America/Montreal"
+]
 ```
 
 ### `GET /me`

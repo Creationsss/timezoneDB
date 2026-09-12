@@ -1,16 +1,34 @@
+use crate::constants;
 use crate::db::AppState;
 use crate::routes::v1::auth::validate_session;
 use crate::types::{GetQuery, JsonMessage, MinimalUserInfo, SetQuery, TimezoneResponse, UserInfo};
 use axum::{
     extract::{Query, State},
-    http::{HeaderMap, StatusCode},
+    http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
     Form, Json,
 };
-use chrono_tz::Tz;
+use chrono_tz::{Tz, TZ_VARIANTS};
 use sqlx::Row;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use tracing::error;
+
+static AVAILABLE_TIMEZONES: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
+    let mut names: Vec<&'static str> = TZ_VARIANTS.iter().map(|tz| tz.name()).collect();
+    names.sort_unstable();
+    names
+});
+
+pub async fn list_available_timezones() -> impl IntoResponse {
+    (
+        [(
+            header::CACHE_CONTROL,
+            constants::TIMEZONE_LIST_CACHE_CONTROL,
+        )],
+        Json(&*AVAILABLE_TIMEZONES),
+    )
+}
 
 pub async fn get_timezone(
     State(state): State<AppState>,

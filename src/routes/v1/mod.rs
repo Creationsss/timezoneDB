@@ -48,6 +48,7 @@ pub fn routes() -> Router<AppState> {
         .route("/delete", delete(timezone::delete_timezone))
         .route("/delete", options(preflight_handler))
         .route("/list", get(timezone::list_timezones))
+        .route("/timezones", get(timezone::list_available_timezones))
         .route("/auth/discord", get(auth::start_oauth))
         .route("/auth/discord/callback", get(auth::handle_callback))
         .route("/me", get(auth::me))

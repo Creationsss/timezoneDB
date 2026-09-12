@@ -15,6 +15,7 @@ pub const DISCORD_DOMAINS: &[&str] = &[
 pub const HTTP_CLIENT_TIMEOUT_SECONDS: u64 = 30;
 pub const CORS_ALLOWED_METHODS: &str = "GET, POST, DELETE, OPTIONS";
 pub const CORS_ALLOWED_HEADERS: &str = "Content-Type, Authorization";
+pub const TIMEZONE_LIST_CACHE_CONTROL: &str = "public, max-age=86400";
 
 pub const DB_IDLE_TIMEOUT_SECONDS: u64 = 600;
 pub const DB_MAX_LIFETIME_SECONDS: u64 = 1800;

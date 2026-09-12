@@ -2,18 +2,8 @@ const loginSection = document.getElementById("login-section");
 const timezoneSection = document.getElementById("timezone-section");
 const avatarEl = document.getElementById("avatar");
 const authStatusEl = document.getElementById("auth-status");
-const timezoneSelect = document.getElementById("timezone-select");
 const setBtn = document.getElementById("set-timezone");
 const statusMsg = document.getElementById("status-msg");
-
-const timezones = Intl.supportedValuesOf("timeZone");
-
-for (const tz of timezones) {
-	const opt = document.createElement("option");
-	opt.value = tz;
-	opt.textContent = tz;
-	timezoneSelect.appendChild(opt);
-}
 
 const ts = new TomSelect("#timezone-select", {
 	create: false,
@@ -21,6 +11,21 @@ const ts = new TomSelect("#timezone-select", {
 	searchField: ["text"],
 	maxOptions: 1000,
 });
+
+async function loadTimezones() {
+	try {
+		const res = await fetch("/v1/timezones");
+		if (!res.ok) throw new Error();
+
+		const timezones = await res.json();
+		ts.addOptions(timezones.map((tz) => ({ value: tz, text: tz })));
+	} catch (error) {
+		console.error(error);
+		statusMsg.textContent = "Failed to load the timezone list.";
+	}
+}
+
+loadTimezones();
 
 let timeInterval;
 let userPreferred24Hour = null;
@@ -204,6 +209,7 @@ async function fetchUserInfo() {
 		logoutBtn.classList.remove("hidden");
 
 		if (tz) {
+			ts.addOption({ value: tz, text: tz });
 			ts.setValue(tz);
 			deleteBtn.classList.remove("hidden");
 
